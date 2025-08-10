@@ -66,8 +66,8 @@ export async function POST(
 
       // Proceed even if key is not set here; PerplexityProvider will fall back to process.env
 
-      // Build prompt
-      const prompt = `Provide a concise, plain-language description (max 80 words) of the GitHub repository below, focusing on what it does and typical use cases. Avoid marketing fluff.\n\nName: ${repo.name}\nFull name: ${repo.full_name}\nURL: ${repo.html_url}\nLanguage: ${repo.language || 'unknown'}\nTopics: ${repo.topics || 'none'}\nExisting description: ${repo.description || 'none'}`;
+      // Build prompt (Polish-only)
+      const prompt = `Napisz zwięzły, rzeczowy opis (maks. 80 słów) tego repozytorium GitHub, wyjaśniając do czego służy i typowe przypadki użycia. Unikaj marketingowego języka. Odpowiadaj wyłącznie po polsku.\n\nNazwa: ${repo.name}\nPełna nazwa: ${repo.full_name}\nURL: ${repo.html_url}\nJęzyk: ${repo.language || 'nieznany'}\nTematy: ${repo.topics || 'brak'}\nIstniejący opis: ${repo.description || 'brak'}`;
 
       // Prefer a direct Perplexity provider with the resolved key
       const orchestrator = createOrchestrator([new PerplexityProvider(userPplxKey || process.env.PPLX_API_KEY)]);
@@ -75,7 +75,7 @@ export async function POST(
         model: 'sonar-small-online',
         temperature: 0.3,
         maxTokens: 180,
-        systemPrompt: 'You are a concise technical assistant. Output a single paragraph without headings.',
+        systemPrompt: 'Jesteś zwięzłym asystentem technicznym. Zawsze odpowiadasz WYŁĄCZNIE po polsku. Zwróć jeden akapit, bez nagłówków.',
         timeout: 25000,
       });
 
