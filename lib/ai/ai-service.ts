@@ -167,6 +167,93 @@ export class OpenAIProvider implements AIProvider {
   }
 }
 
+// ========================
+// Perplexity Provider (OpenAI-compatible)
+// ========================
+
+export class PerplexityProvider implements AIProvider {
+  readonly name = 'perplexity';
+  readonly models = [
+    'llama-3.1-sonar-small-128k-online',
+    'llama-3.1-sonar-large-128k-online',
+    'llama-3.1-8b-instruct',
+    'llama-3.1-70b-instruct'
+  ];
+
+  private client: OpenAI;
+
+  constructor(apiKey?: string) {
+    this.client = new OpenAI({
+      apiKey: apiKey || process.env.PPLX_API_KEY,
+      baseURL: 'https://api.perplexity.ai',
+    });
+  }
+
+  async generateText(prompt: string, options: AIOptions = {}): Promise<AIResponse> {
+    const startTime = Date.now();
+
+    try {
+      const model = options.model || 'llama-3.1-sonar-small-128k-online';
+
+      const response = await this.client.chat.completions.create({
+        model,
+        messages: [
+          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'user' as const, content: prompt }
+        ],
+        max_tokens: options.maxTokens || 1000,
+        temperature: options.temperature ?? 0.7,
+      });
+
+      const responseTime = Date.now() - startTime;
+      const tokensUsed = response.usage?.total_tokens || 0;
+
+      return {
+        text: response.choices[0]?.message?.content || '',
+        model,
+        provider: this.name,
+        tokensUsed,
+        cost: 0,
+        responseTime,
+      };
+    } catch (error) {
+      throw new Error(`Perplexity API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async estimateCost(prompt: string, options: AIOptions = {}): Promise<CostEstimate> {
+    // Public cenniki są zmienne; zwracamy 0 jako neutralną wartość
+    return {
+      inputTokens: Math.ceil(prompt.length / 4),
+      outputTokens: options.maxTokens || 150,
+      estimatedCost: 0,
+      currency: 'USD',
+    };
+  }
+
+  async checkHealth(): Promise<ProviderHealth> {
+    const startTime = Date.now();
+
+    try {
+      await this.client.chat.completions.create({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [{ role: 'user', content: 'ping' }],
+        max_tokens: 5,
+      });
+
+      const latency = Date.now() - startTime;
+      return { available: true, latency, errorRate: 0 };
+    } catch (_) {
+      return { available: false, latency: Date.now() - startTime, errorRate: 1 };
+    }
+  }
+
+  async isAvailable(): Promise<boolean> {
+    const health = await this.checkHealth();
+    return health.available && health.latency < 5000;
+  }
+}
+
 // =====================
 // Anthropic Provider
 // =====================
@@ -619,6 +706,10 @@ export function createOrchestrator(providers: AIProvider[] = []): AIOrchestrator
     
     if (process.env.GOOGLE_AI_API_KEY) {
       defaultProviders.push(createGoogleAIProvider());
+    }
+    
+    if (process.env.PPLX_API_KEY) {
+      defaultProviders.push(new PerplexityProvider());
     }
     
     return new AIOrchestrator(defaultProviders);
