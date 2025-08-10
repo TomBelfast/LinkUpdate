@@ -260,19 +260,36 @@ export class PerplexityProvider implements AIProvider {
 
   async checkHealth(): Promise<ProviderHealth> {
     const startTime = Date.now();
+    const envModel = process.env.PPLX_MODEL;
+    const candidateModels = [
+      envModel,
+      'sonar',
+      'sonar-small-online',
+      'sonar-medium-online',
+      'sonar-small',
+      'sonar-medium',
+      'llama-3-8b-instruct',
+      'llama-3-70b-instruct',
+    ].filter(Boolean) as string[];
 
-    try {
-      await this.client.chat.completions.create({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [{ role: 'user', content: 'ping' }],
-        max_tokens: 5,
-      });
-
-      const latency = Date.now() - startTime;
-      return { available: true, latency, errorRate: 0 };
-    } catch (_) {
-      return { available: false, latency: Date.now() - startTime, errorRate: 1 };
+    for (const model of candidateModels) {
+      try {
+        await this.client.chat.completions.create({
+          model,
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 5,
+        });
+        const latency = Date.now() - startTime;
+        return { available: true, latency, errorRate: 0 };
+      } catch (err: any) {
+        const msg = err?.message || '';
+        if (msg.includes('Invalid model')) {
+          continue;
+        }
+        return { available: false, latency: Date.now() - startTime, errorRate: 1 };
+      }
     }
+    return { available: false, latency: Date.now() - startTime, errorRate: 1 };
   }
 
   async isAvailable(): Promise<boolean> {
