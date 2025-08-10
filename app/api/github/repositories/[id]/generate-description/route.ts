@@ -74,7 +74,7 @@ export async function POST(
       // Prefer a direct Perplexity provider with the resolved key
       const orchestrator = createOrchestrator([new PerplexityProvider(userPplxKey)]);
       const response = await orchestrator.generateText(prompt, {
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'sonar-small-online',
         temperature: 0.3,
         maxTokens: 180,
         systemPrompt: 'You are a concise technical assistant. Output a single paragraph without headings.',

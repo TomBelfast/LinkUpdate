@@ -174,8 +174,11 @@ export class OpenAIProvider implements AIProvider {
 export class PerplexityProvider implements AIProvider {
   readonly name = 'perplexity';
   readonly models = [
-    'llama-3.1-sonar-small-128k-online',
-    'llama-3.1-sonar-large-128k-online',
+    'sonar-small-online',
+    'sonar-medium-online',
+    'sonar-large-online',
+    'sonar-small',
+    'sonar-medium',
     'llama-3.1-8b-instruct',
     'llama-3.1-70b-instruct'
   ];
@@ -193,7 +196,7 @@ export class PerplexityProvider implements AIProvider {
     const startTime = Date.now();
 
     try {
-      const model = options.model || 'llama-3.1-sonar-small-128k-online';
+      const model = options.model || 'sonar-small-online';
 
       const response = await this.client.chat.completions.create({
         model,
