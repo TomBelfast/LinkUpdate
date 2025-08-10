@@ -48,11 +48,8 @@ if (!process.env.GOOGLE_ID || !process.env.GOOGLE_SECRET || !process.env.NEXTAUT
   console.error("Missing required environment variables for authentication");
 }
 
-// Build providers conditionally to avoid OAuth errors when env vars are missing
-const configuredProviders: any[] = [];
-
-if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET) {
-  configuredProviders.push(
+export const authOptions = {
+  providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID as string,
       clientSecret: process.env.GOOGLE_SECRET as string,
@@ -60,17 +57,11 @@ if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET) {
         params: {
           prompt: "consent",
           access_type: "offline",
-          response_type: "code",
-        },
-      },
-    })
-  );
-} else {
-  console.warn("Google OAuth disabled: GOOGLE_ID/GOOGLE_SECRET not set");
-}
-
-configuredProviders.push(
-  CredentialsProvider({
+          response_type: "code"
+        }
+      }
+    }),
+    CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "text" },
@@ -119,11 +110,8 @@ configuredProviders.push(
           return null;
         }
       }
-    })
-);
-
-export const authOptions = {
-  providers: configuredProviders,
+    }),
+  ],
   pages: {
     signIn: "/auth/signin",
     signOut: "/auth/signout",
