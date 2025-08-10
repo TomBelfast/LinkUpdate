@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
     // Sprawdź token sesji
     const token = await getToken({ 
       req: request,
-      secret: process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production",
+      secret: process.env.NEXTAUTH_SECRET,
     });
 
     // Jeśli użytkownik nie jest zalogowany, przekieruj na stronę logowania
