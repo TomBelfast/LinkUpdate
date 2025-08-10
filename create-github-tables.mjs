@@ -121,6 +121,7 @@ async function createGitHubTables() {
         user_id VARCHAR(36) NOT NULL,
         github_username VARCHAR(255),
         github_token VARCHAR(500),
+        pplx_api_key VARCHAR(200),
         api_rate_limit INT DEFAULT 5000,
         api_rate_remaining INT DEFAULT 5000,
         api_rate_reset DATETIME,

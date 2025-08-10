@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import mysql from 'mysql2/promise';
-import { createOrchestrator } from '@/lib/ai/ai-service';
+import { createOrchestrator, PerplexityProvider } from '@/lib/ai/ai-service';
 
 async function getConnection() {
   return await mysql.createConnection({
@@ -24,9 +24,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.PPLX_API_KEY) {
-      return NextResponse.json({ error: 'Perplexity API not configured' }, { status: 503 });
-    }
+    // Env key may be missing in prod. We'll try user-scoped key from DB later.
 
     const repositoryId = parseInt(params.id);
     if (isNaN(repositoryId)) {
@@ -53,10 +51,28 @@ export async function POST(
       }
       const repo = (repos as any[])[0];
 
+      // Try load user-level Perplexity key if env missing
+      let userPplxKey: string | undefined = process.env.PPLX_API_KEY;
+      if (!userPplxKey) {
+        const [cfg] = await connection.execute(
+          'SELECT pplx_api_key FROM github_config WHERE user_id = ? LIMIT 1',
+          [userId]
+        );
+        const row = Array.isArray(cfg) && cfg.length > 0 ? (cfg as any[])[0] : null;
+        if (row?.pplx_api_key) {
+          userPplxKey = row.pplx_api_key as string;
+        }
+      }
+
+      if (!userPplxKey) {
+        return NextResponse.json({ error: 'AI provider unavailable' }, { status: 503 });
+      }
+
       // Build prompt
       const prompt = `Provide a concise, plain-language description (max 80 words) of the GitHub repository below, focusing on what it does and typical use cases. Avoid marketing fluff.\n\nName: ${repo.name}\nFull name: ${repo.full_name}\nURL: ${repo.html_url}\nLanguage: ${repo.language || 'unknown'}\nTopics: ${repo.topics || 'none'}\nExisting description: ${repo.description || 'none'}`;
 
-      const orchestrator = createOrchestrator();
+      // Prefer a direct Perplexity provider with the resolved key
+      const orchestrator = createOrchestrator([new PerplexityProvider(userPplxKey)]);
       const response = await orchestrator.generateText(prompt, {
         model: 'llama-3.1-sonar-small-128k-online',
         temperature: 0.3,
