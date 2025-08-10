@@ -3,21 +3,44 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
-import { desc, eq, or } from 'drizzle-orm';
+import { and, desc, eq, like, or } from 'drizzle-orm';
 
-export async function GET() {
+export async function GET(request: Request) {
   console.log('🔍 GET /api/links - Rozpoczynam obsługę żądania');
-  
+
   try {
-    console.log('📊 Próba pobrania linków z bazy danych...');
     const db = await getDbInstance();
-    const allLinks = await db.select()
-      .from(links)
-      .orderBy(desc(links.createdAt));
-    
-    console.log(`✅ Pobrano ${allLinks.length} linków`);
-    console.log('Przykładowy link:', allLinks[0]);
-    
+
+    const url = new URL(request.url);
+    const rawSearch = url.searchParams.get('search') ?? '';
+    const userId = url.searchParams.get('userId') ?? '';
+
+    const search = rawSearch.trim();
+
+    let query = db.select().from(links);
+
+    const conditions: any[] = [];
+    if (search.length > 0) {
+      conditions.push(
+        or(
+          like(links.title, `%${search}%`),
+          like(links.url, `%${search}%`),
+          like(links.description, `%${search}%`),
+          like(links.prompt, `%${search}%`)
+        )
+      );
+    }
+    if (userId) {
+      conditions.push(eq(links.userId, userId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const allLinks = await query.orderBy(desc(links.createdAt));
+
+    console.log(`✅ Pobrano ${allLinks.length} linków (search="${search}", userId="${userId}")`);
     return NextResponse.json(allLinks);
   } catch (error) {
     console.error('❌ Błąd podczas pobierania linków:', error);
