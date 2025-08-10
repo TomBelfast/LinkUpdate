@@ -40,6 +40,7 @@ export default function LinkList({ links, onEdit, onDelete, onCopy, onShare }: L
           {link.description && (
             <p className="mt-2 text-gray-300 break-all whitespace-pre-wrap">{link.description}</p>
           )}
+          {/* Do not render prompt on homepage cards */}
           <div className="flex gap-2 mt-4">
             <button
               onClick={() => onEdit(link)}
