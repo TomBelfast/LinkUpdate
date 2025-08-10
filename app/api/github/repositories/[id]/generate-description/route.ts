@@ -71,12 +71,35 @@ export async function POST(
       }
 
       // Update repository with AI description
-      await connection.execute(
-        `UPDATE github_repositories 
-         SET ai_description = ?, ai_description_provider = ?, ai_description_model = ?, ai_description_updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND user_id = ?`,
-        [aiDescription, response.provider, response.model, repositoryId, userId]
-      );
+      try {
+        await connection.execute(
+          `UPDATE github_repositories 
+           SET ai_description = ?, ai_description_provider = ?, ai_description_model = ?, ai_description_updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ?`,
+          [aiDescription, response.provider, response.model, repositoryId, userId]
+        );
+      } catch (e: any) {
+        const msg = e?.message || '';
+        // Auto-create columns if missing, then retry once
+        if (msg.includes('Unknown column') || msg.includes('ER_BAD_FIELD_ERROR')) {
+          try {
+            await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description TEXT");
+            await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_provider VARCHAR(64)");
+            await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_model VARCHAR(128)");
+            await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_updated_at DATETIME");
+            await connection.execute(
+              `UPDATE github_repositories 
+               SET ai_description = ?, ai_description_provider = ?, ai_description_model = ?, ai_description_updated_at = CURRENT_TIMESTAMP
+               WHERE id = ? AND user_id = ?`,
+              [aiDescription, response.provider, response.model, repositoryId, userId]
+            );
+          } catch (e2) {
+            return NextResponse.json({ error: 'Database migration failed' }, { status: 500 });
+          }
+        } else {
+          return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -87,8 +110,11 @@ export async function POST(
     } finally {
       await connection.end();
     }
-  } catch (error) {
-    console.error('Error generating repository description:', error);
+  } catch (error: any) {
+    const msg: string = error?.message || '';
+    if (msg.includes('No AI providers available') || msg.includes('Perplexity API not configured')) {
+      return NextResponse.json({ error: 'AI provider unavailable' }, { status: 503 });
+    }
     return NextResponse.json({ error: 'Failed to generate description' }, { status: 500 });
   }
 }
