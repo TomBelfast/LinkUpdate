@@ -1,0 +1,9 @@
+✅ Updated test user password to bcrypt
+Started Next.js PID=28593
+Dev server ready
+CSRF:7c47d77087dfe93727bc6878793db3de43ed21d726154fb048b2d1144f6b8bb0
+LOGIN_STATUS:200
+CREATE:{"id":141,"url":"https://example.com","title":"E2E Test Link","description":"created via e2e","prompt":null,"userId":"a1d8dd8d-5605-404b-9f41-e702b003fdc3","imageData":null,"imageMimeType":null,"thumbnailData":null,"thumbnailMimeType":null,"createdAt":"2025-08-10T08:38:23.000Z","updatedAt":"2025-08-10T08:38:23.000Z"}
+ID:141
+UPDATE:{"data":{"id":141,"url":"https://example.com","title":"E2E Updated Title","description":null,"prompt":null,"userId":"a1d8dd8d-5605-404b-9f41-e702b003fdc3","imageData":null,"imageMimeType":null,"thumbnailData":null,"thumbnailMimeType":null,"createdAt":"2025-08-10T08:38:23.000Z","updatedAt":"2025-08-10T08:38:25.000Z"}}
+DELETE_STATUS:200

@@ -1,0 +1,5 @@
+#!/usr/bin/expect -f
+spawn npx drizzle-kit push:mysql
+expect "?"
+send "0\r"
+expect eof 

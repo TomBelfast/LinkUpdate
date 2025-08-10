@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: link-app
+    restart: unless-stopped
+    ports:
+      - "7777:7777"
+    environment:
+      - NODE_ENV=production
+      - PORT=7777
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_RUNTIME=nodejs
+      - NODE_OPTIONS=--max_old_space_size=4096
+      - NEXT_DISABLE_OPTIMIZATION=1
+      - SKIP_TYPE_CHECK=1
+      - HOST=0.0.0.0
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./.next/cache:/app/.next/cache
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7777/api/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  nextjs-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${UPLOAD_DIR:-/share/Container/link/public/uploads}
+      o: bind
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,112 @@
+# Cursor Rules - Link Manager Project
+
+## Podstawowe reguły projektowe
+
+### 1. Zachowanie istniejących gradientów
+- **KRYTYCZNE**: Wszystkie klasy CSS gradient muszą być zachowane
+- Klasy do zachowania: `gradient-button`, `edit-gradient`, `delete-gradient`, `copy-gradient`, `share-gradient`, `user-logged-gradient`
+- Przy każdej zmianie UI sprawdź, czy gradienty są zachowane w buttonach
+
+### 2. Modernizacja state management
+- Używaj Zustand + TanStack Query zamiast useState/useEffect
+- Centralizuj error handling przez store
+- Implementuj optimistic updates gdzie możliwe
+- Zachowuj wszystkie istniejące funkcjonalności
+
+### 3. Polski język w komentarzach i komunikatach
+- Komentarze mogą być po polsku
+- Komunikaty błędów i interfejs użytkownika po polsku
+- Nazwy zmiennych i funkcji po angielsku
+
+### 4. Testing
+- Po każdej zmianie uruchom `npm test` aby upewnić się, że nic się nie zepsuło
+- Testuj funkcjonalność curl na endpoints API
+- Jeśli coś nie działa, szukaj rozwiązania w internecie i popraw
+
+### 5. **DOKUMENTACJA ZADAŃ**
+**OBOWIĄZKOWE**: Po wykonaniu każdego task/zadania:
+
+1. **Zaktualizuj plik implementacji**:
+   - Zmień status zadania z 🟡 PENDING na 🟢 COMPLETED ✅
+   - Dodaj datę zakończenia w formacie YYYY-MM-DD
+   - Opisz zrealizowane funkcjonalności
+   - Podaj metryki (np. redukcja complexity, liczba plików)
+
+2. **Aktualizuj TODO list**:
+   - Użyj TodoWrite aby oznaczyć zadanie jako completed
+   - Dodaj nowe podzadania jeśli potrzebne
+   - Dokumentuj rezultaty i ulepszeń
+
+3. **Stwórz podsumowanie**:
+   - Lista zmienionych plików
+   - Kluczowe usprawnienia 
+   - Zachowane funkcjonalności (szczególnie gradienty)
+   - Testy które przeszły
+
+4. **Przykład aktualizacji dokumentacji**:
+```markdown
+### **Task X.Y: Nazwa Zadania**
+**Status**: 🟢 COMPLETED ✅  
+**Zakończono**: 2025-08-07
+**Czas realizacji**: X godzin
+
+#### Zrealizowane:
+- ✅ Funkcjonalność A
+- ✅ Funkcjonalność B
+- ✅ Zachowano wszystkie gradienty
+- ✅ Testy przechodzą (X/X)
+
+#### Pliki zmienione:
+- `path/to/file1.ts` - opis zmian
+- `path/to/file2.tsx` - opis zmian
+
+#### Metryki:
+- Redukcja complexity: X%
+- useState hooks: X → Y
+- Nowe capabilities: lista
+```
+
+### 6. Build i deployment
+- Przed commitem zawsze uruchom `npm run build`
+- Sprawdź czy nie ma błędów TypeScript
+- Upewnij się, że wszystkie importy działają
+
+### 7. Git workflow
+- Nie commituj automatycznie bez pozwolenia
+- Używaj opisowych commit messages
+- Backup plików przed większymi zmianami
+
+### 8. Performance
+- Używaj lazy loading (dynamic imports) dla dużych komponentów
+- Implementuj proper error boundaries
+- Zoptymalizuj re-renders przez Zustand selectors
+
+### 9. Bezpieczeństwo
+- Nie loguj haseł ani secrets
+- Używaj bcrypt do hashowania haseł
+- Waliduj input na frontend i backend
+
+### 10. SuperClaude Framework Integration
+- Używaj SuperClaude commands gdy dostępne (/analyze, /implement, /build)
+- Wykorzystuj Task tool dla complex operations
+- Dokumentuj wszystko w TodoWrite dla trackingu
+
+## Architektura projektu
+
+### Tech Stack
+- Next.js 15 (App Router)
+- TypeScript
+- MySQL + Drizzle ORM
+- NextAuth.js
+- Zustand + TanStack Query (nowy)
+- Tailwind CSS
+- Vitest (testing)
+
+### Kluczowe foldery
+- `app/` - Next.js App Router pages
+- `lib/` - Utilities, stores, queries
+- `components/` - Reusable components  
+- `__tests__/` - Test files
+- `scripts/` - Database and build scripts
+
+**PAMIĘTAJ**: Każde wykonane zadanie = aktualizacja dokumentacji!

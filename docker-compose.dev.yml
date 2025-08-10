@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  nextjs-app-dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "9999:9999"
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - OPENAI_API_KEY=sk-test-key-placeholder
+      - ANTHROPIC_API_KEY=sk-test-key-placeholder
+      - DB_HOST=${DB_HOST:-192.168.0.250}
+      - DB_PORT=${DB_PORT:-3306}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-BOLT}
+      - MYSQL_USER=${MYSQL_USER:-test1}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-test1}
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - ngnix_my_bridge
+    restart: unless-stopped
+
+networks:
+  ngnix_my_bridge:
+    external: true 

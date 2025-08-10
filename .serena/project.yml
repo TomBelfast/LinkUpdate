@@ -1,0 +1,36 @@
+language: typescript
+
+ignore_all_files_in_gitignore: true
+
+ignored_paths:
+  - "**/node_modules/**"
+  - "**/.next/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/logs/**"
+  - "**/uploads/**"
+  - "**/serena/**"
+  - "**/.venv/**"
+  - "**/app.log"
+
+read_only: false
+
+excluded_tools: []
+
+initial_prompt: |
+  This is a Next.js 15 Link Management Application with:
+  - TypeScript/JavaScript
+  - MySQL database with Drizzle ORM
+  - NextAuth.js authentication
+  - Tailwind CSS styling
+  - React 19
+  
+  Key directories:
+  - app/ - Next.js App Router pages and API routes
+  - lib/db/ - Database schema and operations
+  - components/ - Reusable React components
+  - scripts/ - Database and deployment scripts
+  
+  Current focus: Code analysis and improvements with Serena integration.
+
+project_name: "link-manager"

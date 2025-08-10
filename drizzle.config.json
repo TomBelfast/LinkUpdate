@@ -1,0 +1,5 @@
+{
+  "schema": "./lib/db/schema/*",
+  "out": "./drizzle",
+  "connectionString": "mysql://test1:test1@192.168.0.250:3306/BOLT"
+} 

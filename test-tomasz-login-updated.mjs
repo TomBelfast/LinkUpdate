@@ -1,0 +1,58 @@
+import mysql from 'mysql2/promise';
+import bcrypt from 'bcrypt';
+
+async function testTomaszLogin() {
+  try {
+    const connection = await mysql.createConnection({
+      host: '192.168.0.250',
+      user: 'testToDo',
+      password: 'testToDo',
+      database: 'ToDo_Test',
+      port: 3306
+    });
+    
+    console.log('✅ Połączenie z bazą danych działa');
+    
+    // Sprawdź użytkownika Tomasz
+    const [users] = await connection.execute(
+      'SELECT * FROM users WHERE email = ?',
+      ['tomaszpasiekauk@gmail.com']
+    );
+    
+    if (users.length === 0) {
+      console.log('❌ Użytkownik tomaszpasiekauk@gmail.com nie istnieje');
+      return;
+    }
+    
+    const user = users[0];
+    console.log('Znaleziony użytkownik:', {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    
+    console.log('Hash hasła w bazie:', user.password);
+    
+    // Testuj poprawne hasło (nowe hasło)
+    const correctPassword = 'Swiat1976@#$';
+    console.log(`\nTestuję poprawne hasło: "${correctPassword}"`);
+    
+    const isValid = await bcrypt.compare(correctPassword, user.password);
+    console.log(`Wynik: ${isValid ? '✅ POPRAWNE' : '❌ NIEPOPRAWNE'}`);
+    
+    // Testuj błędne hasło
+    const wrongPassword = 'wrongpassword';
+    console.log(`\nTestuję błędne hasło: "${wrongPassword}"`);
+    
+    const isWrongValid = await bcrypt.compare(wrongPassword, user.password);
+    console.log(`Wynik: ${isWrongValid ? '✅ POPRAWNE' : '❌ NIEPOPRAWNE'}`);
+    
+    await connection.end();
+    console.log('\nPołączenie zamknięte');
+  } catch (error) {
+    console.error('❌ Błąd:', error.message);
+  }
+}
+
+testTomaszLogin();

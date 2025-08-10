@@ -1,0 +1,2 @@
+ALTER TABLE links MODIFY COLUMN image_data LONGTEXT;
+ALTER TABLE links MODIFY COLUMN thumbnail_data LONGTEXT; 

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nextjs-app-dev:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "9999:9999"
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - HOST=0.0.0.0
+      - PORT=9999
+    command: sh -c "npm run dev"
+    networks:
+      - ngnix_my_bridge
+    restart: unless-stopped
+
+networks:
+  ngnix_my_bridge:
+    external: true 
