@@ -196,29 +196,53 @@ export class PerplexityProvider implements AIProvider {
     const startTime = Date.now();
 
     try {
-      const model = options.model || 'sonar-small-online';
+      const envModel = process.env.PPLX_MODEL;
+      const candidateModels = [
+        options.model,
+        envModel,
+        'sonar-small-online',
+        'sonar-medium-online',
+        'sonar-small',
+        'sonar-medium',
+        'llama-3-8b-instruct',
+        'llama-3-70b-instruct',
+      ].filter(Boolean) as string[];
 
-      const response = await this.client.chat.completions.create({
-        model,
-        messages: [
-          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
-          { role: 'user' as const, content: prompt }
-        ],
-        max_tokens: options.maxTokens || 1000,
-        temperature: options.temperature ?? 0.7,
-      });
+      let lastError: any = null;
+      for (const model of candidateModels) {
+        try {
+          const response = await this.client.chat.completions.create({
+            model,
+            messages: [
+              ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+              { role: 'user' as const, content: prompt }
+            ],
+            max_tokens: options.maxTokens || 1000,
+            temperature: options.temperature ?? 0.7,
+          });
 
-      const responseTime = Date.now() - startTime;
-      const tokensUsed = response.usage?.total_tokens || 0;
+          const responseTime = Date.now() - startTime;
+          const tokensUsed = response.usage?.total_tokens || 0;
 
-      return {
-        text: response.choices[0]?.message?.content || '',
-        model,
-        provider: this.name,
-        tokensUsed,
-        cost: 0,
-        responseTime,
-      };
+          return {
+            text: response.choices[0]?.message?.content || '',
+            model,
+            provider: this.name,
+            tokensUsed,
+            cost: 0,
+            responseTime,
+          };
+        } catch (err: any) {
+          lastError = err;
+          const msg = err?.message || '';
+          if (msg.includes('Invalid model')) {
+            continue; // try next candidate
+          }
+          throw err;
+        }
+      }
+      // If all failed
+      throw new Error(`Perplexity API Error: ${lastError?.message || 'All candidate models failed'}`);
     } catch (error) {
       throw new Error(`Perplexity API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
