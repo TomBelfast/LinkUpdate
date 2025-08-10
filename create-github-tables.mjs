@@ -167,6 +167,14 @@ async function createGitHubTables() {
     console.log('📋 Creating github_config table...');
     await connection.execute(createGitHubConfigTable);
     console.log('✅ github_config table created');
+
+    // Ensure pplx_api_key column exists in github_config
+    try {
+      await connection.execute("ALTER TABLE github_config ADD COLUMN IF NOT EXISTS pplx_api_key VARCHAR(200)");
+      console.log('✅ Ensured github_config.pplx_api_key exists');
+    } catch (e) {
+      console.warn('ℹ️ Could not ensure github_config.pplx_api_key (maybe not MySQL 8+). Proceeding...', e?.message || e);
+    }
     
     // Sprawdź utworzone tabele
     const [tables] = await connection.execute("SHOW TABLES LIKE 'github_%'");
