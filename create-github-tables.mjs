@@ -36,6 +36,10 @@ async function createGitHubTables() {
         name VARCHAR(255) NOT NULL,
         full_name VARCHAR(255) NOT NULL,
         description TEXT,
+        ai_description TEXT,
+        ai_description_provider VARCHAR(64),
+        ai_description_model VARCHAR(128),
+        ai_description_updated_at DATETIME,
         html_url VARCHAR(500) NOT NULL,
         clone_url VARCHAR(500),
         ssh_url VARCHAR(500),
@@ -135,6 +139,17 @@ async function createGitHubTables() {
     console.log('📋 Creating github_repositories table...');
     await connection.execute(createRepositoriesTable);
     console.log('✅ github_repositories table created');
+
+    // Ensure AI description columns exist (for existing installations)
+    try {
+      await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description TEXT");
+      await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_provider VARCHAR(64)");
+      await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_model VARCHAR(128)");
+      await connection.execute("ALTER TABLE github_repositories ADD COLUMN IF NOT EXISTS ai_description_updated_at DATETIME");
+      console.log('✅ Ensured ai_description columns exist');
+    } catch (e) {
+      console.warn('ℹ️ Could not ensure ai_description columns (maybe not MySQL 8+). Proceeding...', e?.message || e);
+    }
     
     console.log('📋 Creating github_repository_tags table...');
     await connection.execute(createRepositoryTagsTable);

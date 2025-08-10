@@ -463,6 +463,16 @@ export default function GitHub() {
                       {repo.description}
                     </p>
                   )}
+                  {!repo.description && (
+                    <p className="text-gray-500 text-sm mb-2">No description provided.</p>
+                  )}
+
+                  {/** AI generated description (if exists) */}
+                  {(repo as any).ai_description && (
+                    <p className="text-gray-200 text-sm mb-3 italic">
+                      {(repo as any).ai_description}
+                    </p>
+                  )}
                   
                   <div className="flex items-center gap-4 text-sm text-gray-400 mb-2">
                     {repo.language && (
@@ -515,6 +525,24 @@ export default function GitHub() {
                         className="gradient-button edit-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
                       >
                         Edit
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          try {
+                            const resp = await fetch(`/api/github/repositories/${repo.id}/generate-description`, { method: 'POST' });
+                            const data = await resp.json();
+                            if (!resp.ok) throw new Error(data?.error || 'Generation failed');
+                            addToast('Opis wygenerowany przez Perplexity', 'success');
+                            fetchRepositories();
+                          } catch (e) {
+                            addToast('Nie udało się wygenerować opisu', 'error');
+                          }
+                        }}
+                        className="gradient-button copy-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        title="Użyj Perplexity do wygenerowania opisu"
+                      >
+                        Użyj Perplexity
                       </button>
                       
                       <button
