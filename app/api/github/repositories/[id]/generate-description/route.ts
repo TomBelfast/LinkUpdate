@@ -64,15 +64,13 @@ export async function POST(
         }
       }
 
-      if (!userPplxKey) {
-        return NextResponse.json({ error: 'AI provider unavailable' }, { status: 503 });
-      }
+      // Proceed even if key is not set here; PerplexityProvider will fall back to process.env
 
       // Build prompt
       const prompt = `Provide a concise, plain-language description (max 80 words) of the GitHub repository below, focusing on what it does and typical use cases. Avoid marketing fluff.\n\nName: ${repo.name}\nFull name: ${repo.full_name}\nURL: ${repo.html_url}\nLanguage: ${repo.language || 'unknown'}\nTopics: ${repo.topics || 'none'}\nExisting description: ${repo.description || 'none'}`;
 
       // Prefer a direct Perplexity provider with the resolved key
-      const orchestrator = createOrchestrator([new PerplexityProvider(userPplxKey)]);
+      const orchestrator = createOrchestrator([new PerplexityProvider(userPplxKey || process.env.PPLX_API_KEY)]);
       const response = await orchestrator.generateText(prompt, {
         model: 'sonar-small-online',
         temperature: 0.3,
