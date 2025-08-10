@@ -10,7 +10,7 @@ export async function GET() {
 
     const provider = new PerplexityProvider(apiKey);
     const res = await provider.generateText('Reply with exactly: OK', {
-      model: 'sonar-small-online',
+      model: 'llama-3.1-8b-instruct',
       maxTokens: 10,
       temperature: 0.0,
       systemPrompt: 'Only answer with OK',
