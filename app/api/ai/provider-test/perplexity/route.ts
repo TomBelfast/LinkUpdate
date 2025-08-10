@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { PerplexityProvider } from '@/lib/ai/ai-service';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const apiKey = process.env.PPLX_API_KEY;
     if (!apiKey) {
@@ -9,15 +9,17 @@ export async function GET() {
     }
 
     const provider = new PerplexityProvider(apiKey);
+    const url = new URL(request.url);
+    const modelParam = url.searchParams.get('model') || undefined;
     const res = await provider.generateText('Reply with exactly: OK', {
-      model: 'llama-3.1-8b-instruct',
+      model: modelParam,
       maxTokens: 10,
       temperature: 0.0,
       systemPrompt: 'Only answer with OK',
       timeout: 15000,
     });
 
-    return NextResponse.json({ ok: true, text: res.text, model: res.model, provider: res.provider });
+    return NextResponse.json({ ok: true, text: res.text, modelTried: modelParam || null, modelUsed: res.model, provider: res.provider });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || 'error' }, { status: 500 });
   }
