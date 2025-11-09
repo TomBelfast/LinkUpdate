@@ -16,7 +16,7 @@ const CONFIG = {
     MIN_CONNECTIONS: 5,
     MAX_CONNECTIONS: 20,
     ACQUIRE_TIMEOUT: 30000,
-    IDLE_TIMEOUT: 10000,
+    IDLE_TIMEOUT: 300000,  // 5 minut - zwiększone z 10s aby zapobiec rozłączaniu
     MAX_QUEUE_SIZE: 100,
     QUEUE_TIMEOUT: 5000
   }
@@ -42,11 +42,11 @@ interface DatabaseConfig {
 // Funkcja do pobierania konfiguracji bazy danych
 function getDatabaseConfig(): DatabaseConfig {
   return {
-    host: process.env.DATABASE_HOST || '192.168.0.250',
+    host: process.env.DATABASE_HOST || '192.168.0.4',
     user: process.env.DATABASE_USER || 'test1',
     password: process.env.DATABASE_PASSWORD || 'test1',
     database: process.env.DATABASE_NAME || 'BOLT',
-    port: parseInt(process.env.DATABASE_PORT || '3306'),
+    port: parseInt(process.env.DATABASE_PORT || '38155'),
   };
 }
 
@@ -124,7 +124,8 @@ class DatabasePool {
       maxPreparedStatements: CONFIG.MAX_PREPARED_STATEMENTS,
       namedPlaceholders: true,
       dateStrings: true,
-      acquireTimeout: CONFIG.POOL.ACQUIRE_TIMEOUT,
+      // acquireTimeout nie jest obsługiwane przez mysql2 - usunięte
+      // idleTimeout jest obsługiwane przez mysql2
       idleTimeout: CONFIG.POOL.IDLE_TIMEOUT,
       flags: [
         '-FOUND_ROWS',
@@ -157,8 +158,11 @@ class DatabasePool {
       console.warn('Oczekiwanie na dostępne połączenie');
     });
 
-    this.pool.on('error', (err) => {
-      console.error('Błąd puli połączeń:', err);
+    // Obsługa błędów - mysql2 emituje błędy przez connection events
+    this.pool.on('connection' as any, (connection: any) => {
+      connection.on('error', (err: Error) => {
+        console.error('Błąd połączenia z bazą danych:', err);
+      });
     });
   }
 
@@ -229,4 +233,4 @@ export async function closeDb(): Promise<void> {
 }
 
 // Eksport typów
-export type Database = typeof db; 
+export type Database = ReturnType<typeof drizzle>; 
