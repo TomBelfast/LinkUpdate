@@ -1,8 +1,9 @@
 import { drizzle } from 'drizzle-orm/mysql2';
-import mysql, { RowDataPacket, Pool } from 'mysql2/promise';
+import * as mysql from 'mysql2/promise';
+import type { RowDataPacket, Pool } from 'mysql2/promise';
 import * as schema from './schema';
-import fs from 'fs/promises';
-import path from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 // Stałe konfiguracyjne
 const CONFIG = {
@@ -51,7 +52,7 @@ function getDatabaseConfig(): DatabaseConfig {
 }
 
 // Funkcja do wykonywania migracji
-async function runMigrations(connection: mysql.Connection) {
+async function runMigrations(connection: mysql.PoolConnection) {
   try {
     const migrationsPath = path.join(process.cwd(), 'drizzle');
     const migrationFiles = await fs.readdir(migrationsPath);
@@ -112,7 +113,11 @@ class DatabasePool {
   private constructor() {
     const config = getDatabaseConfig();
     this.pool = mysql.createPool({
-      ...config,
+      host: config.host,
+      user: config.user,
+      password: config.password,
+      database: config.database,
+      port: config.port,
       connectionLimit: CONFIG.POOL.MAX_CONNECTIONS,
       queueLimit: CONFIG.POOL.MAX_QUEUE_SIZE,
       waitForConnections: true,
@@ -138,7 +143,7 @@ class DatabasePool {
         '+SECURE_CONNECTION',
         '+CONNECT_WITH_DB'
       ],
-    });
+    } as mysql.PoolOptions);
 
     // Obsługa zdarzeń puli
     this.pool.on('acquire', (connection) => {
@@ -157,7 +162,8 @@ class DatabasePool {
       console.warn('Oczekiwanie na dostępne połączenie');
     });
 
-    this.pool.on('error', (err) => {
+    // Obsługa błędów puli
+    (this.pool as any).on('error', (err: Error) => {
       console.error('Błąd puli połączeń:', err);
     });
   }
@@ -220,6 +226,11 @@ export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   return dbInstance;
 }
 
+// Alias dla kompatybilności z istniejącym kodem
+export async function getDbInstance(): Promise<ReturnType<typeof drizzle>> {
+  return getDb();
+}
+
 // Funkcja do zamykania połączenia
 export async function closeDb(): Promise<void> {
   if (dbInstance) {
@@ -229,4 +240,4 @@ export async function closeDb(): Promise<void> {
 }
 
 // Eksport typów
-export type Database = typeof db; 
+export type Database = Awaited<ReturnType<typeof getDb>>; 

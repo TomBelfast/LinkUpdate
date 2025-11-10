@@ -53,14 +53,46 @@ export async function middleware(request: NextRequest) {
 
     // Jeśli użytkownik nie jest zalogowany, przekieruj na stronę logowania
     if (!token) {
-      const url = new URL("/auth/signin", request.url);
-      url.searchParams.set("callbackUrl", encodeURI(request.url));
-      return NextResponse.redirect(url);
+      // Użyj nagłówka host zamiast nextUrl.hostname (który może być 0.0.0.0)
+      const hostHeader = request.headers.get('host') || request.headers.get('x-forwarded-host') || request.nextUrl.host;
+      const hostname = hostHeader ? hostHeader.split(':')[0] : (request.nextUrl.hostname || 'localhost');
+      const port = hostHeader && hostHeader.includes(':') ? hostHeader.split(':')[1] : (request.nextUrl.port || '8888');
+      const protocol = (request.headers.get('x-forwarded-proto') || request.nextUrl.protocol || 'http').replace(':', '');
+      
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || 
+                      (hostname && (hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')));
+      
+      let baseUrl: string;
+      if (process.env.NEXTAUTH_URL && !isLocal) {
+        // Użyj NEXTAUTH_URL tylko dla żądań zewnętrznych (nie lokalnych)
+        baseUrl = process.env.NEXTAUTH_URL;
+      } else {
+        // Dla lokalnych połączeń użyj tego samego protokołu i hosta
+        baseUrl = `${protocol}://${hostname}${port ? ':' + port : ''}`;
+      }
+      const callbackUrl = `${baseUrl}${request.nextUrl.pathname}${request.nextUrl.search}`;
+      const signInUrl = new URL("/auth/signin", baseUrl);
+      signInUrl.searchParams.set("callbackUrl", callbackUrl);
+      return NextResponse.redirect(signInUrl);
     }
 
     // Sprawdź uprawnienia dla ścieżki /admin
     if (pathname.startsWith("/admin") && token.role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+      const hostHeader = request.headers.get('host') || request.headers.get('x-forwarded-host') || request.nextUrl.host;
+      const hostname = hostHeader ? hostHeader.split(':')[0] : (request.nextUrl.hostname || 'localhost');
+      const port = hostHeader && hostHeader.includes(':') ? hostHeader.split(':')[1] : (request.nextUrl.port || '8888');
+      const protocol = (request.headers.get('x-forwarded-proto') || request.nextUrl.protocol || 'http').replace(':', '');
+      
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || 
+                      (hostname && (hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')));
+      
+      let baseUrl: string;
+      if (process.env.NEXTAUTH_URL && !isLocal) {
+        baseUrl = process.env.NEXTAUTH_URL;
+      } else {
+        baseUrl = `${protocol}://${hostname}${port ? ':' + port : ''}`;
+      }
+      return NextResponse.redirect(new URL("/", baseUrl));
     }
 
     // Kontynuuj, jeśli użytkownik jest zalogowany i ma odpowiednie uprawnienia
