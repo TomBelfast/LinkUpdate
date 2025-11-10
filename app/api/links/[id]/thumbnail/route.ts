@@ -8,13 +8,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
 
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
 
-    const [link] = await db.select()
+    const database = await db();
+    const [link] = await database.select()
       .from(links)
       .where(eq(links.id, id));
 

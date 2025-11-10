@@ -396,18 +396,18 @@ export default function Home() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4 text-white">Add New Link</h2>
         <Suspense fallback={<div>Loading form...</div>}>
-          <LinkForm 
-            onSubmit={handleSubmit} 
-            initialData={editingLink ? {
-              url: editingLink.url,
-              title: editingLink.title,
-              description: editingLink.description,
-              prompt: editingLink.prompt,
-              imageData: editingLink.imageData,
-              imageMimeType: editingLink.imageMimeType,
-              thumbnailData: editingLink.thumbnailData,
-              thumbnailMimeType: editingLink.thumbnailMimeType
-            } : undefined}
+          <LinkForm
+            onSubmit={handleSubmit}
+            initialData={(editingLink ? {
+              url: (editingLink as any).url,
+              title: (editingLink as any).title,
+              description: (editingLink as any).description,
+              prompt: (editingLink as any).prompt,
+              imageData: (editingLink as any).imageData,
+              imageMimeType: (editingLink as any).imageMimeType,
+              thumbnailData: (editingLink as any).thumbnailData,
+              thumbnailMimeType: (editingLink as any).thumbnailMimeType
+            } : undefined) as any}
           />
         </Suspense>
       </div>

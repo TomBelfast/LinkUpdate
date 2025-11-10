@@ -82,8 +82,8 @@ export async function PUT(
         'SELECT * FROM api_keys WHERE id = ?',
         [apiKeyId]
       );
-      
-      return NextResponse.json(updatedApiKey[0]);
+
+      return NextResponse.json((updatedApiKey as any[])[0]);
       
     } finally {
       await connection.end();

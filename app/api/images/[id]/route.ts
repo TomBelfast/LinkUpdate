@@ -4,9 +4,9 @@ import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(
@@ -14,18 +14,20 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse> {
   try {
-    const { id } = params;
-    
-    if (isNaN(parseInt(id))) {
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
+
+    if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
 
-    const [image] = await db.select({
+    const database = await db();
+    const [image] = await database.select({
       imageData: links.imageData,
       imageMimeType: links.imageMimeType,
     })
     .from(links)
-    .where(eq(links.id, parseInt(id)));
+    .where(eq(links.id, id));
 
     if (!image || !image.imageData) {
       return NextResponse.json({ error: 'Obraz nie został znaleziony' }, { status: 404 });

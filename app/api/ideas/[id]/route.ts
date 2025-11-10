@@ -9,21 +9,23 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const data = await request.json();
-    await db
+    const database = await db();
+    await database
       .update(ideas)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(ideas.id, (await params).id));
-    
-    const updatedIdea = await db
+      .where(eq(ideas.id, id));
+
+    const updatedIdea = await database
       .select()
       .from(ideas)
-      .where(eq(ideas.id, (await params).id))
+      .where(eq(ideas.id, id))
       .then(res => res[0]);
-    
+
     return NextResponse.json(updatedIdea);
   } catch (error) {
     console.error('Błąd podczas aktualizacji pomysłu:', error);
@@ -40,7 +42,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await db.delete(ideas).where(eq(ideas.id, (await params).id));
+    const { id } = await params;
+    const database = await db();
+    await database.delete(ideas).where(eq(ideas.id, id));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Błąd podczas usuwania pomysłu:', error);

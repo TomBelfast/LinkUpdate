@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
         'SELECT * FROM api_keys WHERE id = ?',
         [apiKeyId]
       );
-      
-      return NextResponse.json(newApiKey[0], { status: 201 });
+
+      return NextResponse.json((newApiKey as any[])[0], { status: 201 });
       
     } finally {
       await connection.end();

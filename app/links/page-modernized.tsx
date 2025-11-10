@@ -102,7 +102,7 @@ export default function Links() {
   };
 
   const handleEdit = (link: LinkWithTimestamp) => {
-    setEditingLink(link);
+    setEditingLink(link as any);
     setEditFormData({
       url: link.url,
       title: link.title,
@@ -333,7 +333,7 @@ export default function Links() {
                   </button>
                   
                   <button
-                    onClick={() => handleShare(link)}
+                    onClick={() => handleShare(link as any)}
                     className="gradient-button share-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
                   >
                     Share
@@ -342,7 +342,7 @@ export default function Links() {
                   {session && (
                     <>
                       <button
-                        onClick={() => handleEdit(link)}
+                        onClick={() => handleEdit(link as any)}
                         className="gradient-button edit-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
                       >
                         Edit

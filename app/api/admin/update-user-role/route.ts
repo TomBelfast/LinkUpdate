@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import mysql from "mysql2/promise";
-import jwt from "jsonwebtoken";
+import { auth } from "@/auth";
 
 // Database connection function
 async function executeQuery(query: string, values: any[] = []) {
@@ -21,28 +20,18 @@ async function executeQuery(query: string, values: any[] = []) {
   }
 }
 
-// Get user from session token
+// Get user from session
 async function getUserFromSession() {
-  const cookieStore = cookies();
-  const sessionToken = cookieStore.get("next-auth.session-token")?.value;
-  
-  if (!sessionToken) {
-    return null;
-  }
-
   try {
-    // Verify and decode the JWT token
-    const secret = process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production";
-    const decoded = jwt.verify(sessionToken, secret) as any;
+    const session = await auth();
 
-    if (!decoded || !decoded.email) {
+    if (!session?.user?.email) {
       return null;
     }
 
-    // Get user from database
     const users = await executeQuery(
       "SELECT * FROM users WHERE email = ?",
-      [decoded.email]
+      [session.user.email]
     ) as any[];
 
     if (!users || users.length === 0) {

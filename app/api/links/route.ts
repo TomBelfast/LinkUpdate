@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/auth';
 
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const search = rawSearch.trim();
 
-    let query = db.select().from(links);
+    let query: any = db.select().from(links);
 
     const conditions: any[] = [];
     if (search.length > 0) {

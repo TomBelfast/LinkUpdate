@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         [repositoryId]
       );
       
-      return NextResponse.json(newRepo[0], { status: 201 });
+      return NextResponse.json((newRepo as any[])[0], { status: 201 });
       
     } finally {
       await connection.end();

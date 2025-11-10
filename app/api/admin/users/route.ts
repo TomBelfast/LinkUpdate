@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import mysql from "mysql2/promise";
-import { decode } from "next-auth/jwt";
+import { auth } from "@/auth";
 
 // Database connection function
 async function executeQuery(query: string, values: any[] = []) {
@@ -21,28 +20,18 @@ async function executeQuery(query: string, values: any[] = []) {
   }
 }
 
-// Get user from session token
-async function getUserFromToken() {
-  const cookieStore = cookies();
-  const sessionToken = cookieStore.get("next-auth.session-token")?.value;
-  
-  if (!sessionToken) {
-    return null;
-  }
-
+// Get user from session
+async function getUserFromSession() {
   try {
-    const decoded = await decode({
-      token: sessionToken,
-      secret: process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production",
-    });
+    const session = await auth();
 
-    if (!decoded || !decoded.email) {
+    if (!session?.user?.email) {
       return null;
     }
 
     const users = await executeQuery(
       "SELECT * FROM users WHERE email = ?",
-      [decoded.email]
+      [session.user.email]
     ) as any[];
 
     if (!users || users.length === 0) {
@@ -51,7 +40,7 @@ async function getUserFromToken() {
 
     return users[0];
   } catch (error) {
-    console.error("Error decoding token:", error);
+    console.error("Error getting user from session:", error);
     return null;
   }
 }
@@ -59,7 +48,7 @@ async function getUserFromToken() {
 export async function GET(request: NextRequest) {
   try {
     // Check if user is authenticated and has admin role
-    const user = await getUserFromToken();
+    const user = await getUserFromSession();
     
     if (!user) {
       return NextResponse.json(

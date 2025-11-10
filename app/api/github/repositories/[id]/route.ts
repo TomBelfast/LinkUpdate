@@ -89,7 +89,7 @@ export async function PUT(
         [repositoryId]
       );
       
-      return NextResponse.json(updatedRepo[0]);
+      return NextResponse.json((updatedRepo as any[])[0]);
       
     } finally {
       await connection.end();

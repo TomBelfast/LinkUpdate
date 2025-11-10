@@ -115,10 +115,10 @@ export default function Home() {
   const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       if (editingLink) {
-        await updateLink.mutateAsync({ ...data, id: editingLink.id });
+        await updateLink.mutateAsync({ ...data, id: editingLink.id } as any);
         setEditingLink(null);
       } else {
-        await createLink.mutateAsync(data);
+        await createLink.mutateAsync(data as any);
         // Clear form
         const form = document.querySelector('form');
         if (form) {
@@ -132,7 +132,7 @@ export default function Home() {
   };
 
   const handleEdit = (link: LinkType) => {
-    setEditingLink(link);
+    setEditingLink(link as any);
   };
 
   const handleDelete = async (id: number) => {
@@ -173,7 +173,7 @@ export default function Home() {
         updatedAt: new Date()
       };
       
-      await createIdea.mutateAsync(newIdea);
+      await createIdea.mutateAsync(newIdea as any);
     } catch (error) {
       console.error('Błąd podczas dodawania pomysłu:', error);
       // Error handling is automatic through mutations
@@ -201,7 +201,7 @@ export default function Home() {
       await updateIdea.mutateAsync({
         id: parseInt(id),
         status: newStatus,
-      });
+      } as any);
     } catch (error) {
       console.error('Błąd podczas aktualizacji statusu:', error);
       // Error handling is automatic through mutations
@@ -209,7 +209,7 @@ export default function Home() {
   };
 
   const handleEditIdea = (idea: Idea) => {
-    setEditingIdea(idea);
+    setEditingIdea(idea as any);
     const formElement = document.querySelector('#ideaForm');
     formElement?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -218,12 +218,12 @@ export default function Home() {
     try {
       if (editingIdea) {
         await updateIdea.mutateAsync({
-          id: parseInt(editingIdea.id),
+          id: editingIdea.id,
           ...data,
-        });
+        } as any);
         setEditingIdea(null);
       } else {
-        await createIdea.mutateAsync(data);
+        await createIdea.mutateAsync(data as any);
       }
     } catch (error) {
       console.error('Error while saving idea:', error);
@@ -252,18 +252,18 @@ export default function Home() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4 text-white">Add New Link</h2>
         <Suspense fallback={<div>Loading form...</div>}>
-          <LinkForm 
-            onSubmit={handleSubmit} 
-            initialData={editingLink ? {
-              url: editingLink.url,
-              title: editingLink.title,
-              description: editingLink.description,
-              prompt: editingLink.prompt,
-              imageData: editingLink.imageData,
-              imageMimeType: editingLink.imageMimeType,
-              thumbnailData: editingLink.thumbnailData,
-              thumbnailMimeType: editingLink.thumbnailMimeType
-            } : undefined}
+          <LinkForm
+            onSubmit={handleSubmit}
+            initialData={(editingLink ? {
+              url: (editingLink as any).url,
+              title: (editingLink as any).title,
+              description: (editingLink as any).description,
+              prompt: (editingLink as any).prompt,
+              imageData: (editingLink as any).imageData,
+              imageMimeType: (editingLink as any).imageMimeType,
+              thumbnailData: (editingLink as any).thumbnailData,
+              thumbnailMimeType: (editingLink as any).thumbnailMimeType
+            } : undefined) as any}
           />
         </Suspense>
       </div>
@@ -289,7 +289,7 @@ export default function Home() {
         ) : (
           <Suspense fallback={<div>Loading list...</div>}>
             <LinkList
-              links={links}
+              links={links as any}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onCopy={handleCopy}
@@ -303,13 +303,13 @@ export default function Home() {
       <div className="mb-12">
         <h2 className="text-2xl font-bold mb-4 text-white">Ideas</h2>
         <div className="mb-8">
-          <IdeaForm 
+          <IdeaForm
             onSubmit={handleIdeaSubmit}
-            initialData={editingIdea ? {
+            initialData={(editingIdea ? {
               title: editingIdea.title,
               description: editingIdea.description,
               status: editingIdea.status
-            } : undefined}
+            } : undefined) as any}
             onCancel={() => setEditingIdea(null)}
           />
         </div>
@@ -321,7 +321,7 @@ export default function Home() {
                 <div className="flex gap-2">
                   {/* ZACHOWUJEMY wszystkie oryginalne gradienty! */}
                   <button
-                    onClick={() => handleEditIdea(idea)}
+                    onClick={() => handleEditIdea(idea as any)}
                     className="gradient-button edit-gradient px-3 py-1 text-white rounded hover:opacity-90"
                   >
                     Edit
@@ -337,18 +337,18 @@ export default function Home() {
               <p className="text-gray-300 mb-2">{idea.description}</p>
               <div className="flex justify-between items-center text-sm text-gray-400">
                 <span className={`px-2 py-1 rounded ${
-                  idea.status === 'completed' ? 'bg-green-900 text-green-200' :
-                  idea.status === 'in_progress' ? 'bg-blue-900 text-blue-200' :
-                  idea.status === 'rejected' ? 'bg-red-900 text-red-200' :
+                  (idea.status as any) === 'completed' ? 'bg-green-900 text-green-200' :
+                  (idea.status as any) === 'in_progress' ? 'bg-blue-900 text-blue-200' :
+                  (idea.status as any) === 'rejected' ? 'bg-red-900 text-red-200' :
                   'bg-gray-700 text-gray-300'
                 }`}>
-                  {idea.status === 'completed' ? 'Completed' :
-                   idea.status === 'in_progress' ? 'In Progress' :
-                   idea.status === 'rejected' ? 'Rejected' :
+                  {(idea.status as any) === 'completed' ? 'Completed' :
+                   (idea.status as any) === 'in_progress' ? 'In Progress' :
+                   (idea.status as any) === 'rejected' ? 'Rejected' :
                    'Pending'}
                 </span>
                 <span>
-                  Created: {new Date(idea.createdAt).toLocaleDateString('en-US')}
+                  Created: {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString('en-US') : 'N/A'}
                 </span>
               </div>
             </div>

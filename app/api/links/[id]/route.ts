@@ -66,10 +66,9 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const { id } = await params;
-    const resolvedId = await Promise.resolve((await params).id);
-  
-  const id = validateId(resolvedId);
+  const { id: idStr } = await params;
+
+  const id = validateId(idStr);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
@@ -132,7 +131,7 @@ export async function PUT(
     });
 
     await db.update(links)
-      .set(updateData)
+      .set(updateData as any)
       .where(eq(links.id, id))
       .execute();
     
@@ -162,10 +161,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const { id } = await params;
-    const resolvedId = await Promise.resolve((await params).id);
-  
-  const id = validateId(resolvedId);
+  const { id: idStr } = await params;
+
+  const id = validateId(idStr);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
