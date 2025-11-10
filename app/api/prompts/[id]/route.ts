@@ -3,10 +3,10 @@ import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedId = await Promise.resolve(params.id);
-    const id = parseInt(resolvedId);
+    const { id } = await params;
+    const resolvedId = await Promise.resolve((await params).id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
@@ -31,12 +31,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const data = await request.json();
     const db = await getDbInstance();
-    const resolvedId = await Promise.resolve(params.id);
-    const id = parseInt(resolvedId);
+    const { id } = await params;
+    const resolvedId = await Promise.resolve((await params).id);
     
     console.log('Aktualizacja promptu - otrzymane dane:', {
       id,
@@ -151,11 +151,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedId = await Promise.resolve(params.id);
+    const { id } = await params;
+    const resolvedId = await Promise.resolve((await params).id);
     const db = await getDbInstance();
-    const id = parseInt(resolvedId);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });

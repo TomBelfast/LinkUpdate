@@ -5,14 +5,14 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
     console.log(`Pobieranie miniatury dla ID: ${id}`);
     
     if (isNaN(id)) {
-      console.error('Nieprawidłowe ID:', params.id);
+      console.error('Nieprawidłowe ID:', (await params).id);
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
     

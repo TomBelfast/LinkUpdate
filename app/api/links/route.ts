@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
 import { and, desc, eq, like, or } from 'drizzle-orm';
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Sprawdzenie autoryzacji
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Musisz być zalogowany aby dodać link' },

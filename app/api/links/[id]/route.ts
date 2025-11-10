@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
+
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -32,11 +32,11 @@ const checkOwnership = async (linkId: number, userId: string) => {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
-  
-  const id = validateId(resolvedId);
+  const { id: idStr } = await params;
+
+  const id = validateId(idStr);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
@@ -64,9 +64,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
+  const { id } = await params;
+    const resolvedId = await Promise.resolve((await params).id);
   
   const id = validateId(resolvedId);
   if (id === null) {
@@ -76,7 +77,7 @@ export async function PUT(
   try {
     const db = await getDbInstance();
     // Sprawdzenie autoryzacji
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Musisz być zalogowany aby edytować link', status: 401 },
@@ -159,9 +160,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
+  const { id } = await params;
+    const resolvedId = await Promise.resolve((await params).id);
   
   const id = validateId(resolvedId);
   if (id === null) {
@@ -171,7 +173,7 @@ export async function DELETE(
   try {
     const db = await getDbInstance();
     // Sprawdzenie autoryzacji
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Musisz być zalogowany aby usunąć link', status: 401 },

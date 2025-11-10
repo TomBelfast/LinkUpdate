@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
+
 import mysql from 'mysql2/promise';
 import { createOrchestrator, PerplexityProvider } from '@/lib/ai/ai-service';
 
@@ -16,17 +16,18 @@ async function getConnection() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Env key may be missing in prod. We'll try user-scoped key from DB later.
 
-    const repositoryId = parseInt(params.id);
+    const { id } = await params;
+    const repositoryId = parseInt((await params).id);
     if (isNaN(repositoryId)) {
       return NextResponse.json({ error: 'Invalid repository ID' }, { status: 400 });
     }
