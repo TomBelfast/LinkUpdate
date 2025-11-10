@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Fetch API keys with categories
       const [apiKeys] = await connection.execute(`
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Insert API key
       const [result] = await connection.execute(`
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         [apiKeyId]
       );
       
-      return NextResponse.json(newApiKey[0], { status: 201 });
+      return NextResponse.json((newApiKey as any)[0], { status: 201 });
       
     } finally {
       await connection.end();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -17,7 +17,7 @@ async function getConnection() {
 // PUT - Update a repository
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,7 +54,7 @@ export async function PUT(
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Check if repository exists and belongs to user
       const [repos] = await connection.execute(
@@ -88,7 +88,7 @@ export async function PUT(
         [repositoryId]
       );
       
-      return NextResponse.json(updatedRepo[0]);
+      return NextResponse.json((updatedRepo as any)[0]);
       
     } finally {
       await connection.end();
@@ -106,7 +106,7 @@ export async function PUT(
 // DELETE - Delete a repository
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -133,7 +133,7 @@ export async function DELETE(
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Check if repository exists and belongs to user
       const [repos] = await connection.execute(

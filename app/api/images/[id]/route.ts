@@ -3,18 +3,13 @@ import { db } from '@/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: any
 ): Promise<NextResponse> {
   try {
-    const { id } = params;
+    const resolvedId = await Promise.resolve(params.id);
+    const id = resolvedId;
     
     if (isNaN(parseInt(id))) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });

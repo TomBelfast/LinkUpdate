@@ -23,7 +23,7 @@ async function executeQuery(query: string, values: any[] = []) {
 
 // Get user from session token
 async function getUserFromSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionToken = cookieStore.get("next-auth.session-token")?.value;
   
   if (!sessionToken) {
@@ -49,7 +49,7 @@ async function getUserFromSession() {
       return null;
     }
 
-    return users[0];
+    return (users as any)[0];
   } catch (error) {
     console.error("Error getting user from session:", error);
     return null;

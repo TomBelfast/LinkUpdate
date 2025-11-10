@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -32,7 +32,7 @@ const checkOwnership = async (linkId: number, userId: string) => {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
   const resolvedId = await Promise.resolve(params.id);
   
@@ -64,7 +64,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
   const resolvedId = await Promise.resolve(params.id);
   
@@ -159,7 +159,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
   const resolvedId = await Promise.resolve(params.id);
   

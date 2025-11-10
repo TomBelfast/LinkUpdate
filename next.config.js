@@ -28,6 +28,24 @@ const nextConfig = {
   },
   // Docker standalone output
   output: 'standalone',
+  // Konfiguracja webpack dla lepszej obsługi vendor chunks
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Upewnij się, że vendor chunks są poprawnie generowane
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            default: false,
+            vendors: false,
+          },
+        },
+      };
+    }
+    return config;
+  },
 }
 
 export default nextConfig

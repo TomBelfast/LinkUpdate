@@ -3,7 +3,7 @@ import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: any) {
   try {
     const resolvedId = await Promise.resolve(params.id);
     const id = parseInt(resolvedId);
@@ -31,7 +31,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: any) {
   try {
     const data = await request.json();
     const db = await getDbInstance();
@@ -151,7 +151,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: any) {
   try {
     const resolvedId = await Promise.resolve(params.id);
     const db = await getDbInstance();

@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDbInstance } from '@/db';
 import { ideas } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 // PUT /api/ideas/[id] - aktualizuj pomysł
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const data = await request.json();
+    const db = await getDbInstance();
     await db
       .update(ideas)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(ideas.id, params.id));
+      .where(eq(ideas.id, await Promise.resolve(params.id)));
     
     const updatedIdea = await db
       .select()
@@ -37,10 +38,12 @@ export async function PUT(
 // DELETE /api/ideas/[id] - usuń pomysł
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
-    await db.delete(ideas).where(eq(ideas.id, params.id));
+    const resolvedId = await Promise.resolve(params.id);
+    const db = await getDbInstance();
+    await db.delete(ideas).where(eq(ideas.id, resolvedId));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Błąd podczas usuwania pomysłu:', error);

@@ -43,10 +43,10 @@ interface DatabaseConfig {
 // Funkcja do pobierania konfiguracji bazy danych
 function getDatabaseConfig(): DatabaseConfig {
   return {
-    host: process.env.DATABASE_HOST || '192.168.0.250',
-    user: process.env.DATABASE_USER || 'test1',
-    password: process.env.DATABASE_PASSWORD || 'test1',
-    database: process.env.DATABASE_NAME || 'BOLT',
+    host: process.env.DATABASE_HOST || '192.168.0.9',
+    user: process.env.DATABASE_USER || 'testToDo',
+    password: process.env.DATABASE_PASSWORD || 'testToDo',
+    database: process.env.DATABASE_NAME || 'ToDo_Test',
     port: parseInt(process.env.DATABASE_PORT || '3306'),
   };
 }
@@ -55,6 +55,16 @@ function getDatabaseConfig(): DatabaseConfig {
 async function runMigrations(connection: mysql.PoolConnection) {
   try {
     const migrationsPath = path.join(process.cwd(), 'drizzle');
+    
+    // Sprawdź czy katalog istnieje
+    try {
+      await fs.access(migrationsPath);
+    } catch {
+      console.log('⚠️ Katalog migracji nie istnieje, pomijam migracje');
+      migrationCompleted = true;
+      return;
+    }
+    
     const migrationFiles = await fs.readdir(migrationsPath);
     const sqlFiles = migrationFiles.filter(file => file.endsWith('.sql'));
 

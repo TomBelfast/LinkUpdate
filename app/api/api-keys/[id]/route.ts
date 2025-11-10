@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -17,7 +17,7 @@ async function getConnection() {
 // PUT - Update an API key
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,7 +54,7 @@ export async function PUT(
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Check if API key exists and belongs to user
       const [apiKeys] = await connection.execute(
@@ -83,7 +83,7 @@ export async function PUT(
         [apiKeyId]
       );
       
-      return NextResponse.json(updatedApiKey[0]);
+      return NextResponse.json((updatedApiKey as any)[0]);
       
     } finally {
       await connection.end();
@@ -101,7 +101,7 @@ export async function PUT(
 // DELETE - Delete an API key
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -128,7 +128,7 @@ export async function DELETE(
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Check if API key exists and belongs to user
       const [apiKeys] = await connection.execute(
@@ -157,7 +157,7 @@ export async function DELETE(
         [apiKeyId, userId]
       );
       
-      return NextResponse.json({ message: 'API key deleted successfully' });
+      return NextResponse.json({ message: 'API key deleted successfully' } as any);
       
     } finally {
       await connection.end();

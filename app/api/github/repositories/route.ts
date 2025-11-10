@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Fetch repositories with tags and notes count
       const [repositories] = await connection.execute(`
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
       
       // Generate clone and SSH URLs from html_url
       const clone_url = html_url.replace('https://github.com/', 'https://github.com/').replace(/\/tree\/.*$/, '') + '.git';
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         [repositoryId]
       );
       
-      return NextResponse.json(newRepo[0], { status: 201 });
+      return NextResponse.json((newRepo as any)[0], { status: 201 });
       
     } finally {
       await connection.end();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import mysql from 'mysql2/promise';
 import { createOrchestrator, PerplexityProvider } from '@/lib/ai/ai-service';
 
@@ -16,7 +16,7 @@ async function getConnection() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -40,7 +40,7 @@ export async function POST(
       if (!Array.isArray(users) || users.length === 0) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-      const userId = (users[0] as any).id;
+      const userId = ((users as any)[0] as any).id;
 
       // Fetch repository
       const [repos] = await connection.execute(
@@ -49,7 +49,7 @@ export async function POST(
       if (!Array.isArray(repos) || repos.length === 0) {
         return NextResponse.json({ error: 'Repository not found' }, { status: 404 });
       }
-      const repo = (repos as any[])[0];
+      const repo = ((repos as any[])[0] as any);
 
       // Try load user-level Perplexity key if env missing
       let userPplxKey: string | undefined = process.env.PPLX_API_KEY;
@@ -58,7 +58,7 @@ export async function POST(
           'SELECT pplx_api_key FROM github_config WHERE user_id = ? LIMIT 1',
           [userId]
         );
-        const row = Array.isArray(cfg) && cfg.length > 0 ? (cfg as any[])[0] : null;
+        const row = Array.isArray(cfg) && cfg.length > 0 ? ((cfg as any[])[0] as any) : null;
         if (row?.pplx_api_key) {
           userPplxKey = row.pplx_api_key as string;
         }
