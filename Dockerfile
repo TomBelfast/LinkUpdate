@@ -19,6 +19,8 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+# Install libc6-compat for compatibility
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -42,6 +44,7 @@ ARG GOOGLE_ID
 ARG GOOGLE_SECRET
 ARG PPLX_API_KEY
 ARG PPLX_MODEL
+ARG NODE_ENV
 
 # Set environment variables for build (use dummy values if not provided)
 ENV DATABASE_HOST=${DATABASE_HOST:-localhost}
@@ -55,7 +58,10 @@ ENV GOOGLE_ID=${GOOGLE_ID:-dummy-google-id}
 ENV GOOGLE_SECRET=${GOOGLE_SECRET:-dummy-google-secret}
 ENV PPLX_API_KEY=${PPLX_API_KEY:-}
 ENV PPLX_MODEL=${PPLX_MODEL:-}
+ENV NODE_ENV=${NODE_ENV:-development}
 
+# Verify npm is available and build
+RUN which npm && npm --version || echo "npm not found"
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
