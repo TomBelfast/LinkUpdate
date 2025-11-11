@@ -57,13 +57,6 @@
       "is_required": true
     },
     {
-      "key": "MYSQL_ROOT_PASSWORD",
-      "value": "",
-      "is_build_time": false,
-      "is_literal": false,
-      "is_required": false
-    },
-    {
       "key": "GOOGLE_ID",
       "value": "",
       "is_build_time": false,
