@@ -40,19 +40,55 @@ export async function POST(request: Request) {
       });
     }
     
-    // Dodaj nowy prompt
-    const insertData = {
+    // Przygotuj dane do zapisu
+    const insertData: any = {
       title: data.title,
       url: '#prompt',
       description: data.description || null,
       prompt: data.prompt || null,
-      imageData: data.imageData || null,
-      imageMimeType: data.imageMimeType || null,
-      thumbnailData: data.thumbnailData || null,
-      thumbnailMimeType: data.thumbnailMimeType || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
+
+    // Konwertuj dane obrazu z base64 na bufor jeśli są dostępne
+    if (data.imageData && data.imageMimeType) {
+      try {
+        // Usuń prefix data:image/...;base64, jeśli istnieje
+        const base64Data = data.imageData.startsWith('data:') 
+          ? data.imageData.split(',')[1] ?? data.imageData
+          : data.imageData;
+        
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        insertData.imageData = imageBuffer;
+        insertData.imageMimeType = data.imageMimeType;
+        console.log('Przygotowano dane obrazu:', {
+          bufferLength: imageBuffer.length,
+          mimeType: data.imageMimeType
+        });
+      } catch (error) {
+        console.error('Błąd konwersji danych obrazu:', error);
+      }
+    }
+
+    // Konwertuj dane miniatury z base64 na bufor jeśli są dostępne
+    if (data.thumbnailData && data.thumbnailMimeType) {
+      try {
+        // Usuń prefix data:image/...;base64, jeśli istnieje
+        const base64Thumbnail = data.thumbnailData.startsWith('data:') 
+          ? data.thumbnailData.split(',')[1] ?? data.thumbnailData
+          : data.thumbnailData;
+        
+        const thumbnailBuffer = Buffer.from(base64Thumbnail, 'base64');
+        insertData.thumbnailData = thumbnailBuffer;
+        insertData.thumbnailMimeType = data.thumbnailMimeType;
+        console.log('Przygotowano dane miniatury:', {
+          bufferLength: thumbnailBuffer.length,
+          mimeType: data.thumbnailMimeType
+        });
+      } catch (error) {
+        console.error('Błąd konwersji danych miniatury:', error);
+      }
+    }
 
     console.log('Zapisywanie danych:', {
       ...insertData,
@@ -69,9 +105,12 @@ export async function POST(request: Request) {
       .limit(1);
 
     console.log('Zapisany prompt:', {
-      ...newPrompt,
-      imageData: newPrompt.imageData ? `[${newPrompt.imageData.length} bajtów]` : null,
-      thumbnailData: newPrompt.thumbnailData ? `[${newPrompt.thumbnailData.length} bajtów]` : null
+      id: newPrompt.id,
+      title: newPrompt.title,
+      hasImage: !!newPrompt.imageData,
+      hasThumbnail: !!newPrompt.thumbnailData,
+      imageData: newPrompt.imageData ? `[${Buffer.isBuffer(newPrompt.imageData) ? newPrompt.imageData.length : 'nie-Buffer'] bajtów]` : null,
+      thumbnailData: newPrompt.thumbnailData ? `[${Buffer.isBuffer(newPrompt.thumbnailData) ? newPrompt.thumbnailData.length : 'nie-Buffer'] bajtów]` : null
     });
 
     return NextResponse.json(newPrompt);
