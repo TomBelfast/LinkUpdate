@@ -32,32 +32,15 @@ class DatabasePool {
         password: env.DATABASE_PASSWORD,
         database: env.DATABASE_NAME,
         port: env.DATABASE_PORT,
-        
-        // Connection pool settings
         waitForConnections: true,
-        connectionLimit: 10,        // Maximum 10 concurrent connections
-        queueLimit: 0,             // No limit on queued requests
-        
-        // Connection health settings  
-        idleTimeout: 300000,       // Close idle connections after 5 minutes
-        maxIdle: 5,                // Keep max 5 idle connections
-        
-        // Security and performance
-        ssl: false,                // Disable SSL for local development
-        multipleStatements: false, // Security: prevent multiple statement attacks
-        
-        // Connection validation
+        connectionLimit: 10,
+        queueLimit: 0,
+        idleTimeout: 60000,
+        maxIdle: 10,
+        ssl: false as any,
+        multipleStatements: true,
         enableKeepAlive: true,
-        keepAliveInitialDelay: 0,
-      });
-      
-      // Event listeners for monitoring
-      this.pool.on('connection', (connection) => {
-        console.log(`📡 New connection established as id ${connection.threadId}`);
-      });
-      
-      this.pool.on('error', (err) => {
-        console.error('❌ Database pool error:', err);
+        keepAliveInitialDelay: 0
       });
       
       console.log('✅ Database connection pool created successfully');

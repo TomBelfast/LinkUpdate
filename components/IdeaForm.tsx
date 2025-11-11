@@ -4,8 +4,8 @@ interface IdeaFormProps {
   onSubmit: (data: { title: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'rejected' }) => void;
   initialData?: {
     title: string;
-    description: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+    description: string | null;
+    status: 'pending' | 'in_progress' | 'completed' | 'rejected' | string;
   };
   onCancel?: () => void;
 }
@@ -13,13 +13,15 @@ interface IdeaFormProps {
 export default function IdeaForm({ onSubmit, initialData, onCancel }: IdeaFormProps) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [status, setStatus] = useState(initialData?.status || 'pending');
+  const [status, setStatus] = useState<'pending' | 'in_progress' | 'completed' | 'rejected'>(
+    (initialData?.status as 'pending' | 'in_progress' | 'completed' | 'rejected') || 'pending'
+  );
 
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
-      setDescription(initialData.description);
-      setStatus(initialData.status);
+      setDescription(initialData.description || '');
+      setStatus((initialData.status as 'pending' | 'in_progress' | 'completed' | 'rejected') || 'pending');
     }
   }, [initialData]);
 

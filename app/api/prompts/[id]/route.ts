@@ -5,8 +5,8 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedId = await Promise.resolve(params.id);
-    const id = parseInt(resolvedId);
+    const { id: rawId } = await params;
+    const id = parseInt(rawId);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
@@ -35,8 +35,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const data = await request.json();
     const db = await getDb();
-    const resolvedId = await Promise.resolve(params.id);
-    const id = parseInt(resolvedId);
+    const { id: rawId } = await params;
+    const id = parseInt(rawId);
     
     console.log('Aktualizacja promptu - otrzymane dane:', {
       id,
@@ -48,7 +48,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
     
     if (isNaN(id)) {
-      console.error('Nieprawidłowe ID:', resolvedId);
+      console.error('Nieprawidłowe ID:', rawId);
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
 
@@ -153,9 +153,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedId = await Promise.resolve(params.id);
+    const { id: rawId } = await params;
     const db = await getDb();
-    const id = parseInt(resolvedId);
+    const id = parseInt(rawId);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });

@@ -1,10 +1,11 @@
-import { db } from '@/db';
+import { getDb } from '@/lib/db/index';
 import { links } from '@/db/schema';
 
 async function seed() {
   console.log('Rozpoczynanie procesu seedowania...');
 
   try {
+    const db = await getDb();
     await db.insert(links).values([
       {
         url: 'https://nextjs.org',

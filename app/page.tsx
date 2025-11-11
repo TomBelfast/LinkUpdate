@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Link as LinkType } from '@/db/schema';
+import { Link as LinkType, Idea as IdeaType } from '@/db/schema';
 import { commonStyles } from '@/styles/common';
 import IdeaForm from '@/components/IdeaForm';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,15 +36,6 @@ const LinkList = dynamic(() => import('@/components/LinkList'), {
     </div>
   )
 });
-
-interface Idea {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export default function Home() {
   // Zustand store state (replaces 8 useState hooks)
@@ -112,10 +103,11 @@ export default function Home() {
   }, [linksError, ideasError, setError, addToast]);
 
   // Handlers (simplified with mutations)
-  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     try {
       if (editingLink) {
-        await updateLink.mutateAsync({ ...data, id: editingLink.id });
+        const { createdAt, updatedAt, userId, ...updateData } = data as any;
+        await updateLink.mutateAsync({ ...updateData, id: editingLink.id });
         setEditingLink(null);
       } else {
         await createLink.mutateAsync(data);
@@ -186,7 +178,7 @@ export default function Home() {
     }
 
     try {
-      await deleteIdea.mutateAsync(parseInt(id));
+      await deleteIdea.mutateAsync(id);
     } catch (error) {
       console.error('Error while deleting idea:', error);
       // Error handling is automatic through mutations
@@ -195,11 +187,11 @@ export default function Home() {
 
   const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'in_progress' | 'completed' | 'rejected') => {
     try {
-      const ideaToUpdate = ideas.find(idea => idea.id === parseInt(id));
+      const ideaToUpdate = ideas.find(idea => idea.id === id);
       if (!ideaToUpdate) return;
 
       await updateIdea.mutateAsync({
-        id: parseInt(id),
+        id: id,
         status: newStatus,
       });
     } catch (error) {
@@ -208,7 +200,7 @@ export default function Home() {
     }
   };
 
-  const handleEditIdea = (idea: Idea) => {
+  const handleEditIdea = (idea: IdeaType) => {
     setEditingIdea(idea);
     const formElement = document.querySelector('#ideaForm');
     formElement?.scrollIntoView({ behavior: 'smooth' });
@@ -218,7 +210,7 @@ export default function Home() {
     try {
       if (editingIdea) {
         await updateIdea.mutateAsync({
-          id: parseInt(editingIdea.id),
+          id: editingIdea.id,
           ...data,
         });
         setEditingIdea(null);

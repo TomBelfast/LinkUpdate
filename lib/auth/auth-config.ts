@@ -130,15 +130,15 @@ export const authOptions: AuthOptions = {
           console.error("Error handling Google user in DB:", error);
         }
       } else if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        token.id = user.id || '';
+        token.role = user.role || 'user';
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = token.id || '';
+        session.user.role = token.role || 'user';
       }
       return session;
     },

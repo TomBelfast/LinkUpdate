@@ -3,16 +3,16 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import { queryKeys, fetchWithErrorHandling, handleQueryError } from './query-client';
 import { useAppStore } from '../store/app-store';
 import type { Idea } from '../store/app-store';
+import { Idea as IdeaType } from '@/db/schema';
 
 // Types
-interface CreateIdeaData {
+interface CreateIdeaData extends Partial<Omit<IdeaType, 'id' | 'createdAt' | 'updatedAt'>> {
   title: string;
   description: string;
-  status?: 'active' | 'completed' | 'archived';
 }
 
-interface UpdateIdeaData extends Partial<CreateIdeaData> {
-  id: number;
+interface UpdateIdeaData extends Partial<Omit<IdeaType, 'id' | 'createdAt'>> {
+  id: string;
 }
 
 interface IdeaFilters {
@@ -44,7 +44,7 @@ export function useIdeas(filters?: IdeaFilters): UseQueryResult<Idea[], Error> {
 }
 
 // Fetch single idea query hook
-export function useIdea(id: number): UseQueryResult<Idea, Error> {
+export function useIdea(id: string): UseQueryResult<Idea, Error> {
   return useQuery({
     queryKey: queryKeys.ideasDetail(id),
     queryFn: (): Promise<Idea> => fetchWithErrorHandling<Idea>(`/api/ideas/${id}`),
@@ -113,12 +113,12 @@ export function useUpdateIdea(): UseMutationResult<Idea, Error, UpdateIdeaData> 
 }
 
 // Delete idea mutation hook
-export function useDeleteIdea(): UseMutationResult<void, Error, number> {
+export function useDeleteIdea(): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   const { addToast } = useAppStore();
 
   return useMutation({
-    mutationFn: async (id: number): Promise<void> => {
+    mutationFn: async (id: string): Promise<void> => {
       await fetchWithErrorHandling<void>(`/api/ideas/${id}`, {
         method: 'DELETE',
       });
@@ -142,12 +142,12 @@ export function useDeleteIdea(): UseMutationResult<void, Error, number> {
 }
 
 // Change idea status (active -> completed -> archived)
-export function useChangeIdeaStatus(): UseMutationResult<Idea, Error, { id: number; status: 'active' | 'completed' | 'archived' }> {
+export function useChangeIdeaStatus(): UseMutationResult<Idea, Error, { id: string; status: 'active' | 'completed' | 'archived' }> {
   const queryClient = useQueryClient();
   const { addToast } = useAppStore();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: 'active' | 'completed' | 'archived' }): Promise<Idea> => {
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'completed' | 'archived' }): Promise<Idea> => {
       return fetchWithErrorHandling<Idea>(`/api/ideas/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),

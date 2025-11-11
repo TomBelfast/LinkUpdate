@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f package-lock.json ]; then npm ci --legacy-peer-deps; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
@@ -22,11 +22,39 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Ensure public directory exists (create if missing)
+RUN mkdir -p public
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
+
+# Build arguments for environment variables (optional during build)
+ARG DATABASE_HOST
+ARG DATABASE_PORT
+ARG DATABASE_USER
+ARG DATABASE_PASSWORD
+ARG DATABASE_NAME
+ARG NEXTAUTH_SECRET
+ARG NEXTAUTH_URL
+ARG GOOGLE_ID
+ARG GOOGLE_SECRET
+ARG PPLX_API_KEY
+ARG PPLX_MODEL
+
+# Set environment variables for build (use dummy values if not provided)
+ENV DATABASE_HOST=${DATABASE_HOST:-localhost}
+ENV DATABASE_PORT=${DATABASE_PORT:-3306}
+ENV DATABASE_USER=${DATABASE_USER:-user}
+ENV DATABASE_PASSWORD=${DATABASE_PASSWORD:-password}
+ENV DATABASE_NAME=${DATABASE_NAME:-database}
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dummy-secret-key-for-build-only-min-32-chars}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+ENV GOOGLE_ID=${GOOGLE_ID:-dummy-google-id}
+ENV GOOGLE_SECRET=${GOOGLE_SECRET:-dummy-google-secret}
+ENV PPLX_API_KEY=${PPLX_API_KEY:-}
+ENV PPLX_MODEL=${PPLX_MODEL:-}
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
@@ -47,10 +75,6 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing

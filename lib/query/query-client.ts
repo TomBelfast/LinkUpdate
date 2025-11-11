@@ -27,19 +27,6 @@ const defaultOptions: DefaultOptions = {
 // Create the query client
 export const queryClient = new QueryClient({
   defaultOptions,
-  logger: {
-    log: (message) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[React Query] ${message}`);
-      }
-    },
-    warn: (message) => {
-      console.warn(`[React Query] ${message}`);
-    },
-    error: (message) => {
-      console.error(`[React Query] ${message}`);
-    },
-  },
 });
 
 // Query keys factory - centralized query key management
@@ -57,7 +44,7 @@ export const queryKeys = {
   ideas: () => [...queryKeys.all, 'ideas'] as const,
   ideasList: (filters?: { status?: string; userId?: string }) => 
     [...queryKeys.ideas(), 'list', filters] as const,
-  ideasDetail: (id: number) => [...queryKeys.ideas(), 'detail', id] as const,
+  ideasDetail: (id: string | number) => [...queryKeys.ideas(), 'detail', id] as const,
   
   // User queries
   users: () => [...queryKeys.all, 'users'] as const,

@@ -17,8 +17,6 @@ export async function GET(request: Request) {
 
     const search = rawSearch.trim();
 
-    let query = db.select().from(links);
-
     const conditions: any[] = [];
     if (search.length > 0) {
       conditions.push(
@@ -34,8 +32,9 @@ export async function GET(request: Request) {
       conditions.push(eq(links.userId, userId));
     }
 
+    let query = db.select().from(links);
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      query = query.where(and(...conditions)) as typeof query;
     }
 
     const allLinks = await query.orderBy(desc(links.createdAt));

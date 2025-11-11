@@ -13,7 +13,7 @@ export async function GET(
     console.log(`Pobieranie miniatury dla ID: ${id}`);
     
     if (isNaN(id)) {
-      console.error('Nieprawidłowe ID:', params.id);
+      console.error('Nieprawidłowe ID:', rawId);
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
     

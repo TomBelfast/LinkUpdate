@@ -1,10 +1,11 @@
-import { db } from '../db';
+import { getDb } from '../lib/db/index';
 import { sql } from 'drizzle-orm';
 
 async function createIdeasTable() {
   try {
     console.log('Tworzenie tabeli ideas...');
     
+    const db = await getDb();
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS ideas (
         id VARCHAR(36) PRIMARY KEY,

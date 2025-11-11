@@ -16,21 +16,21 @@ interface FormData {
 }
 
 interface PromptFormProps {
-  onSubmit: (data: Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'url'>) => Promise<void>;
-  initialData?: Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'url'>;
+  onSubmit: (data: Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'url' | 'userId'>) => Promise<void>;
+  initialData?: Partial<Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'url' | 'userId'>>;
   currentImageUrl?: string | null;
 }
 
 export default function PromptForm({ onSubmit, initialData, currentImageUrl = null }: PromptFormProps) {
   const [formData, setFormData] = useState<FormData>(() => 
     initialData ? {
-      title: initialData.title,
-      description: initialData.description,
-      prompt: initialData.prompt,
-      imageData: initialData.imageData,
-      imageMimeType: initialData.imageMimeType,
-      thumbnailData: initialData.thumbnailData,
-      thumbnailMimeType: initialData.thumbnailMimeType
+      title: initialData.title || '',
+      description: initialData.description ?? null,
+      prompt: initialData.prompt ?? null,
+      imageData: initialData.imageData ?? null,
+      imageMimeType: initialData.imageMimeType ?? null,
+      thumbnailData: initialData.thumbnailData ?? null,
+      thumbnailMimeType: initialData.thumbnailMimeType ?? null
     } : {
       title: '',
       description: null,
@@ -62,13 +62,13 @@ export default function PromptForm({ onSubmit, initialData, currentImageUrl = nu
         currentImageUrl
       });
       setFormData({
-        title: initialData.title,
-        description: initialData.description,
-        prompt: initialData.prompt,
-        imageData: initialData.imageData,
-        imageMimeType: initialData.imageMimeType,
-        thumbnailData: initialData.thumbnailData,
-        thumbnailMimeType: initialData.thumbnailMimeType
+        title: initialData.title || '',
+        description: initialData.description ?? null,
+        prompt: initialData.prompt ?? null,
+        imageData: initialData.imageData ?? null,
+        imageMimeType: initialData.imageMimeType ?? null,
+        thumbnailData: initialData.thumbnailData ?? null,
+        thumbnailMimeType: initialData.thumbnailMimeType ?? null
       });
       
       if (initialData.imageData && initialData.imageMimeType) {

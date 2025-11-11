@@ -5,13 +5,22 @@ import { Link } from '@/db/schema';
 import { commonStyles } from '@/styles/common';
 
 interface LinkFormProps {
-  onSubmit: (data: Omit<Link, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  initialData?: Omit<Link, 'id' | 'createdAt' | 'updatedAt'>;
+  onSubmit: (data: Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => void;
+  initialData?: Partial<Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'userId'>>;
 }
 
 export default function LinkForm({ onSubmit, initialData }: LinkFormProps) {
-  const [formData, setFormData] = useState(() => 
-    initialData || { 
+  const [formData, setFormData] = useState<Omit<Link, 'id' | 'createdAt' | 'updatedAt' | 'userId'>>(() => 
+    initialData ? {
+      url: initialData.url || '',
+      title: initialData.title || '',
+      description: initialData.description ?? null,
+      prompt: initialData.prompt ?? null,
+      imageData: initialData.imageData ?? null,
+      imageMimeType: initialData.imageMimeType ?? null,
+      thumbnailData: initialData.thumbnailData ?? null,
+      thumbnailMimeType: initialData.thumbnailMimeType ?? null
+    } : { 
       url: '', 
       title: '', 
       description: null, 
@@ -25,7 +34,16 @@ export default function LinkForm({ onSubmit, initialData }: LinkFormProps) {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        url: initialData.url || '',
+        title: initialData.title || '',
+        description: initialData.description ?? null,
+        prompt: initialData.prompt ?? null,
+        imageData: initialData.imageData ?? null,
+        imageMimeType: initialData.imageMimeType ?? null,
+        thumbnailData: initialData.thumbnailData ?? null,
+        thumbnailMimeType: initialData.thumbnailMimeType ?? null
+      });
     } else {
       setFormData({ url: '', title: '', description: null, prompt: null, imageData: null, imageMimeType: null, thumbnailData: null, thumbnailMimeType: null });
     }

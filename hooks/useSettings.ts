@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { STORAGE_KEYS, DEFAULT_SYSTEM_PROMPTS } from '@/lib/constants/storage';
-import type { ChatSettings } from '@/lib/types/chat';
+
+interface ChatSettings {
+  selectedModel: string;
+  systemPrompt: string;
+  messages: any[];
+  systemPrompts: string[];
+  isArenaMode: boolean;
+  arenaModels: string[];
+}
 
 export function useSettings() {
   const [settings, setSettings] = useState<ChatSettings>(() => {
@@ -15,19 +23,28 @@ export function useSettings() {
       };
     }
 
-    const savedSettings = localStorage.getItem(STORAGE_KEYS.CHAT_SETTINGS);
-    return savedSettings ? JSON.parse(savedSettings) : {
-      selectedModel: localStorage.getItem(STORAGE_KEYS.MODEL) || '',
-      systemPrompt: localStorage.getItem(STORAGE_KEYS.SYSTEM_PROMPT) || DEFAULT_SYSTEM_PROMPTS[0],
-      messages: JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]'),
-      systemPrompts: JSON.parse(localStorage.getItem(STORAGE_KEYS.PROMPTS_LIST) || JSON.stringify(DEFAULT_SYSTEM_PROMPTS)),
+    const savedModel = localStorage.getItem('selectedModel');
+    const savedPrompt = localStorage.getItem('systemPrompt');
+    const savedMessages = localStorage.getItem('messages');
+    const savedPrompts = localStorage.getItem('systemPrompts');
+    
+    return {
+      selectedModel: savedModel || '',
+      systemPrompt: savedPrompt || DEFAULT_SYSTEM_PROMPTS[0] || '',
+      messages: savedMessages ? JSON.parse(savedMessages) : [],
+      systemPrompts: savedPrompts ? JSON.parse(savedPrompts) : DEFAULT_SYSTEM_PROMPTS,
       isArenaMode: false,
       arenaModels: []
     };
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CHAT_SETTINGS, JSON.stringify(settings));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedModel', settings.selectedModel);
+      localStorage.setItem('systemPrompt', settings.systemPrompt);
+      localStorage.setItem('messages', JSON.stringify(settings.messages));
+      localStorage.setItem('systemPrompts', JSON.stringify(settings.systemPrompts));
+    }
   }, [settings]);
 
   return { settings, setSettings };

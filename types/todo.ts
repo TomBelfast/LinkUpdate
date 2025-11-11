@@ -60,7 +60,7 @@ interface BaseEntity {
 }
 
 // Główne interfejsy
-export interface Project extends BaseEntity {
+export interface ProjectEntity extends BaseEntity {
   name: string;
   description?: string;
   status: ProjectStatus;
@@ -69,7 +69,7 @@ export interface Project extends BaseEntity {
   icon?: string;
 }
 
-export interface Task extends BaseEntity {
+export interface TaskEntity extends BaseEntity {
   description: string;
   status: TaskStatus;
   dueDate?: Date;
@@ -77,14 +77,14 @@ export interface Task extends BaseEntity {
   assignedTo?: string;
 }
 
-export interface Idea extends BaseEntity {
+export interface IdeaEntity extends BaseEntity {
   title: string;
   description?: string;
   status: IdeaStatus;
   tags?: string[]; // Przechowywane jako JSON
 }
 
-export interface Resource extends BaseEntity {
+export interface ResourceEntity extends BaseEntity {
   url: string;
   title: string;
   description?: string;
@@ -92,7 +92,7 @@ export interface Resource extends BaseEntity {
   projectId: string;
 }
 
-export interface WidgetConfiguration extends BaseEntity {
+export interface WidgetConfigurationEntity extends BaseEntity {
   widgetType: string;
   configuration?: Record<string, unknown>; // Przechowywane jako JSON
   position: number;

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { Link as LinkType, Idea as IdeaType } from '@/db/schema';
 
 // Types
 interface User {
@@ -9,26 +10,11 @@ interface User {
   role?: 'admin' | 'user';
 }
 
-interface Link {
-  id: number;
-  title: string;
-  url: string;
-  description?: string;
-  thumbnail?: string;
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+// Use LinkType from schema instead of local Link interface
+type Link = LinkType & { _timestamp?: number };
 
-interface Idea {
-  id: number;
-  title: string;
-  description: string;
-  status: 'active' | 'completed' | 'archived';
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+// Use IdeaType from schema instead of local Idea interface
+type Idea = IdeaType;
 
 // Main App State Interface
 interface AppState {

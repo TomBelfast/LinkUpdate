@@ -3,15 +3,15 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import { queryKeys, fetchWithErrorHandling, handleQueryError } from './query-client';
 import { useAppStore } from '../store/app-store';
 import type { Link } from '../store/app-store';
+import { Link as LinkType } from '@/db/schema';
 
 // Types
-interface CreateLinkData {
+interface CreateLinkData extends Partial<Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'userId'>> {
   title: string;
   url: string;
-  description?: string;
 }
 
-interface UpdateLinkData extends Partial<CreateLinkData> {
+interface UpdateLinkData extends Partial<Omit<LinkType, 'id' | 'createdAt' | 'userId'>> {
   id: number;
 }
 

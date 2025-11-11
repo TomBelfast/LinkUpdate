@@ -6,23 +6,38 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_HOST: ${DATABASE_HOST:-192.168.0.9}
+        DATABASE_PORT: ${DATABASE_PORT:-3306}
+        DATABASE_USER: ${DATABASE_USER:-testToDo}
+        DATABASE_PASSWORD: ${DATABASE_PASSWORD:-testToDo}
+        DATABASE_NAME: ${DATABASE_NAME:-ToDo_Test}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-super-secret-key-for-development-only}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:8888}
+        GOOGLE_ID: ${GOOGLE_ID:-75776085978-plq74fedshgbnmno7mgckbp0bhk3bmkm.apps.googleusercontent.com}
+        GOOGLE_SECRET: ${GOOGLE_SECRET:-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}
+        PPLX_API_KEY: ${PPLX_API_KEY:-}
+        PPLX_MODEL: ${PPLX_MODEL:-sonar}
     ports:
-      - "8888:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
       # External database configuration - update these values
-      - DATABASE_HOST=192.168.0.250
+      - DATABASE_HOST=192.168.0.9
       - DATABASE_USER=testToDo
       - DATABASE_PASSWORD=testToDo
       - DATABASE_NAME=ToDo_Test
       - DATABASE_PORT=3306
       # NextAuth configuration
-      - NEXTAUTH_SECRET=your-super-secret-key-change-this-in-production
-      - NEXTAUTH_URL=http://localhost:8888
-      # Google OAuth (optional)
-      - GOOGLE_ID=${GOOGLE_ID:-}
-      - GOOGLE_SECRET=${GOOGLE_SECRET:-}
+      - NEXTAUTH_SECRET=super-secret-key-for-development-only
+      - NEXTAUTH_URL=http://localhost:3001
+      # Google OAuth
+      - GOOGLE_ID=75776085978-plq74fedshgbnmno7mgckbp0bhk3bmkm.apps.googleusercontent.com
+      - GOOGLE_SECRET=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
+      # AI Providers
+      - PPLX_API_KEY=${PPLX_API_KEY:-}
+      - PPLX_MODEL=sonar
     restart: unless-stopped
     # Add extra_hosts if needed for database connectivity
     extra_hosts:
-      - "database:192.168.0.250"
+      - "database:192.168.0.9"

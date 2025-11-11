@@ -169,7 +169,7 @@ export default function Home() {
     }
   }, [searchTerm, allLinks]);
 
-  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     try {
       const url = editingLink ? `/api/links/${editingLink.id}` : '/api/links';
       const method = editingLink ? 'PUT' : 'POST';

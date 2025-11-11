@@ -1,0 +1,123 @@
+{
+  "name": "LinkUpdate-Production",
+  "description": "Production deployment - Stable version",
+  "type": "docker-compose",
+  "docker_compose_location": "docker-compose.prod.yaml",
+  "environment_variables": [
+    {
+      "key": "NODE_ENV",
+      "value": "production",
+      "is_build_time": true,
+      "is_literal": true
+    },
+    {
+      "key": "NEXTAUTH_URL",
+      "value": "https://link3.aihub.ovh",
+      "is_build_time": false,
+      "is_literal": false
+    },
+    {
+      "key": "NEXTAUTH_SECRET",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "DATABASE_HOST",
+      "value": "db",
+      "is_build_time": false,
+      "is_literal": true
+    },
+    {
+      "key": "DATABASE_PORT",
+      "value": "3306",
+      "is_build_time": false,
+      "is_literal": true
+    },
+    {
+      "key": "DATABASE_USER",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "DATABASE_PASSWORD",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "DATABASE_NAME",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "MYSQL_ROOT_PASSWORD",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "GOOGLE_ID",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "GOOGLE_SECRET",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": true
+    },
+    {
+      "key": "PPLX_API_KEY",
+      "value": "",
+      "is_build_time": false,
+      "is_literal": false,
+      "is_required": false
+    },
+    {
+      "key": "PPLX_MODEL",
+      "value": "sonar",
+      "is_build_time": false,
+      "is_literal": true,
+      "is_required": false
+    }
+  ],
+  "ports": [
+    {
+      "published": 3000,
+      "target": 3000,
+      "protocol": "tcp"
+    }
+  ],
+  "volumes": [
+    {
+      "name": "mysql-data",
+      "mount_path": "/var/lib/mysql"
+    }
+  ],
+  "health_check": {
+    "enabled": true,
+    "test": ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"],
+    "interval": "30s",
+    "timeout": "3s",
+    "retries": 3,
+    "start_period": "40s"
+  },
+  "deploy": {
+    "replicas": 1,
+    "restart_policy": {
+      "condition": "unless-stopped"
+    }
+  }
+}
+

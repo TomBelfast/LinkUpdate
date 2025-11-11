@@ -57,7 +57,7 @@ export default function Prompts() {
     }
   };
 
-  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'url'>) => {
+  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'url' | 'userId'>) => {
     try {
       const url = editingPrompt ? `/api/prompts/${editingPrompt.id}` : '/api/prompts';
       const method = editingPrompt ? 'PUT' : 'POST';

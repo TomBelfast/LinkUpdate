@@ -45,15 +45,6 @@ let pool: mysql.Pool | null = null;
 export function getPool(): mysql.Pool {
   if (!pool) {
     pool = mysql.createPool(POOL_CONFIG);
-    
-    // Handle pool errors
-    pool.on('error', (err) => {
-      console.error('Database pool error:', err);
-      if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-        // Pool will automatically reconnect
-        console.log('Database connection lost, pool will reconnect...');
-      }
-    });
   }
   
   return pool;
