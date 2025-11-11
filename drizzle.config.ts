@@ -1,17 +1,29 @@
 import type { Config } from 'drizzle-kit';
 import * as dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.development' });
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
+
+// Validate required environment variables
+const requiredEnvVars = ['DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_NAME'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  throw new Error(
+    `Missing required environment variables for Drizzle: ${missingVars.join(', ')}\n` +
+    'Please ensure all DATABASE_* variables are set in .env.local'
+  );
+}
 
 export default {
   schema: './lib/db/schema/index.ts',
   out: './drizzle',
   driver: 'mysql2',
   dbCredentials: {
-    host: process.env.DB_HOST || '192.168.0.250',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'testToDo',
-    password: process.env.DB_PASSWORD || 'testToDo',
-    database: process.env.DB_NAME || 'ToDo'
+    host: process.env.DATABASE_HOST!,
+    port: Number(process.env.DATABASE_PORT!),
+    user: process.env.DATABASE_USER!,
+    password: process.env.DATABASE_PASSWORD!,
+    database: process.env.DATABASE_NAME!,
   }
 } satisfies Config; 

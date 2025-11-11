@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { links } from '@/db/schema';
+import { getDb } from '@/lib/db';
+import { links } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const db = await getDb();
     
     if (isNaN(parseInt(id))) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });

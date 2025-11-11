@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import mysql from "mysql2/promise";
 import { decode } from "next-auth/jwt";
+import { env } from "@/lib/env";
 
 // Database connection function
 async function executeQuery(query: string, values: any[] = []) {
@@ -23,7 +24,7 @@ async function executeQuery(query: string, values: any[] = []) {
 
 // Get user from session token
 async function getUserFromToken() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionToken = cookieStore.get("next-auth.session-token")?.value;
   
   if (!sessionToken) {
@@ -33,7 +34,7 @@ async function getUserFromToken() {
   try {
     const decoded = await decode({
       token: sessionToken,
-      secret: process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production",
+      secret: env.NEXTAUTH_SECRET,
     });
 
     if (!decoded || !decoded.email) {

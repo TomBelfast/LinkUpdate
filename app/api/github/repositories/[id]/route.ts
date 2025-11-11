@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -17,16 +17,17 @@ async function getConnection() {
 // PUT - Update a repository
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const repositoryId = parseInt(params.id);
+    const { id } = await params;
+    const repositoryId = parseInt(id);
     if (isNaN(repositoryId)) {
       return NextResponse.json({ error: 'Invalid repository ID' }, { status: 400 });
     }
@@ -86,8 +87,8 @@ export async function PUT(
       const [updatedRepo] = await connection.execute(
         'SELECT * FROM github_repositories WHERE id = ?',
         [repositoryId]
-      );
-      
+      ) as any[];
+
       return NextResponse.json(updatedRepo[0]);
       
     } finally {
@@ -106,16 +107,17 @@ export async function PUT(
 // DELETE - Delete a repository
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const repositoryId = parseInt(params.id);
+    const { id } = await params;
+    const repositoryId = parseInt(id);
     if (isNaN(repositoryId)) {
       return NextResponse.json({ error: 'Invalid repository ID' }, { status: 400 });
     }

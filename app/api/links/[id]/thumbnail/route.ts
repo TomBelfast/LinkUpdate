@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { links } from '@/db/schema';
+import { getDb } from '@/lib/db';
+import { links } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: rawId } = await params;
+    const id = parseInt(rawId);
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
 
+    const db = await getDb();
     const [link] = await db.select()
       .from(links)
       .where(eq(links.id, id));
@@ -41,4 +43,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}

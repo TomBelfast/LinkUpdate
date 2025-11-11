@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getDbInstance } from '@/db';
+import { getDb } from '@/lib/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const resolvedId = await Promise.resolve(params.id);
     const id = parseInt(resolvedId);
@@ -12,7 +12,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
 
-    const db = await getDbInstance();
+    const db = await getDb();
     const [prompt] = await db.select()
       .from(links)
       .where(eq(links.id, id));
@@ -31,10 +31,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const data = await request.json();
-    const db = await getDbInstance();
+    const db = await getDb();
     const resolvedId = await Promise.resolve(params.id);
     const id = parseInt(resolvedId);
     
@@ -151,10 +151,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const resolvedId = await Promise.resolve(params.id);
-    const db = await getDbInstance();
+    const db = await getDb();
     const id = parseInt(resolvedId);
     
     if (isNaN(id)) {

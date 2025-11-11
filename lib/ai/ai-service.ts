@@ -68,9 +68,17 @@ export class OpenAIProvider implements AIProvider {
   };
 
   constructor(apiKey?: string) {
+    // SECURITY: Verify we're running server-side only
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        'OpenAI client cannot be initialized in browser environment. ' +
+        'Use API routes for AI operations.'
+      );
+    }
+
     this.client = new OpenAI({
       apiKey: apiKey || process.env.OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Allow for testing environment
+      // dangerouslyAllowBrowser removed - server-side only
     });
   }
 
@@ -314,9 +322,17 @@ export class AnthropicProvider implements AIProvider {
   };
 
   constructor(apiKey?: string) {
+    // SECURITY: Verify we're running server-side only
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        'Anthropic client cannot be initialized in browser environment. ' +
+        'Use API routes for AI operations.'
+      );
+    }
+
     this.client = new Anthropic({
       apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
-      dangerouslyAllowBrowser: true, // Allow for testing environment
+      // dangerouslyAllowBrowser removed - server-side only
     });
   }
 

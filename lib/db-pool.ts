@@ -1,27 +1,33 @@
 import mysql from 'mysql2/promise';
+import { env } from './env';
 
 // Database connection pool configuration
+// SECURITY: All credentials come from validated environment variables
+// No fallback values - application will fail fast if configuration is invalid
 const POOL_CONFIG = {
-  host: process.env.DATABASE_HOST || '192.168.0.250',
-  user: process.env.DATABASE_USER || 'testToDo', 
-  password: process.env.DATABASE_PASSWORD || 'testToDo',
-  database: process.env.DATABASE_NAME || 'ToDo_Test',
-  port: parseInt(process.env.DATABASE_PORT || '3306'),
-  // Connection pool settings
-  connectionLimit: 10, // Maximum number of connections in pool
-  queueLimit: 0, // No queue limit
-  acquireTimeout: 60000, // 60 seconds
-  timeout: 60000, // 60 seconds
+  host: env.DATABASE_HOST,
+  user: env.DATABASE_USER,
+  password: env.DATABASE_PASSWORD,
+  database: env.DATABASE_NAME,
+  port: env.DATABASE_PORT,
+
+  // Connection pool settings (optimized for production)
+  connectionLimit: 50, // Increased for production load
+  queueLimit: 100, // Prevent memory exhaustion
+  acquireTimeout: 10000, // 10 seconds (reduced from 60s)
+  timeout: 10000, // 10 seconds
   reconnect: true,
   multipleStatements: true,
   charset: 'utf8mb4',
+
   // Keep connections alive
   keepAliveInitialDelay: 10000,
   enableKeepAlive: true,
+
   // Connection flags for MySQL
   flags: [
     '-FOUND_ROWS',
-    '-IGNORE_SPACE', 
+    '-IGNORE_SPACE',
     '+LONG_FLAG',
     '+LONG_PASSWORD',
     '+PROTOCOL_41',

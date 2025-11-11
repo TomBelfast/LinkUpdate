@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getDbInstance } from '@/db';
-import { ideas } from '@/db/schema';
+import { getDb } from '@/lib/db';
+import { ideas } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,9 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 export async function GET() {
   try {
     console.log('Pobieranie wszystkich pomysłów...');
-    
-    const db = await getDbInstance();
-    
+
+    const db = await getDb();
+
     // Sprawdź połączenie z bazą danych
     try {
       await db.execute(sql`SELECT 1`);
@@ -31,7 +31,7 @@ export async function GET() {
 
     const allIdeas = await db.select().from(ideas).orderBy(ideas.createdAt);
     console.log('Pobrane pomysły:', JSON.stringify(allIdeas, null, 2));
-    
+
     return NextResponse.json(allIdeas);
   } catch (error) {
     console.error('Błąd podczas pobierania pomysłów:', error);
@@ -47,12 +47,12 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     console.log('Otrzymane dane:', data);
-    
+
     // Generuj nowe UUID dla pomysłu
     const newId = uuidv4();
-    
-    const db = await getDbInstance();
-    
+
+    const db = await getDb();
+
     // Dodaj pomysł do bazy
     const insertResult = await db.insert(ideas).values({
       id: newId,
@@ -61,20 +61,20 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     });
     console.log('Wynik insertu:', insertResult);
-    
+
     // Pobierz dodany pomysł
     const newIdea = await db
       .select()
       .from(ideas)
       .where(eq(ideas.id, newId))
       .then(res => res[0]);
-    
+
     console.log('Pobrany pomysł:', newIdea);
-    
+
     if (!newIdea) {
       throw new Error('Nie udało się pobrać utworzonego pomysłu');
     }
-    
+
     return NextResponse.json(newIdea);
   } catch (error) {
     console.error('Błąd podczas dodawania pomysłu:', error);
@@ -83,4 +83,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

@@ -1,31 +1,115 @@
+# ============================================================================
+# Docker Compose - Development Configuration
+# For local development with hot-reload and volume mounting
+# ============================================================================
+
 version: '3.8'
 
 services:
-  nextjs-app-dev:
+  # ============================================================================
+  # Next.js Development Server
+  # ============================================================================
+  app:
     build:
       context: .
-      target: dev
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: development
+
+    image: linkupdate:dev
+
+    container_name: linkupdate-dev
+
+    restart: unless-stopped
+
+    ports:
+      - "${APP_PORT:-9999}:9999"
+
+    environment:
+      # Node Environment
+      NODE_ENV: development
+
+      # Database Configuration
+      DATABASE_HOST: ${DATABASE_HOST:-db}
+      DATABASE_PORT: ${DATABASE_PORT:-3306}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+
+      # NextAuth Configuration
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:9999}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+
+      # Google OAuth
+      GOOGLE_ID: ${GOOGLE_ID}
+      GOOGLE_SECRET: ${GOOGLE_SECRET}
+
+      # AI Providers (Optional)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
+      PPLX_API_KEY: ${PPLX_API_KEY:-}
+
     volumes:
+      # Mount source code for hot-reload
       - .:/app
       - /app/node_modules
       - /app/.next
-    ports:
-      - "9999:9999"
-    environment:
-      - NODE_ENV=development
-      - NEXT_TELEMETRY_DISABLED=1
-      - OPENAI_API_KEY=sk-test-key-placeholder
-      - ANTHROPIC_API_KEY=sk-test-key-placeholder
-      - DB_HOST=${DB_HOST:-192.168.0.250}
-      - DB_PORT=${DB_PORT:-3306}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-BOLT}
-      - MYSQL_USER=${MYSQL_USER:-test1}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-test1}
-    command: sh -c "npm install && npm run dev"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
     networks:
-      - ngnix_my_bridge
+      - linkupdate-network
+
+    command: npm run dev
+
+  # ============================================================================
+  # MySQL Database
+  # ============================================================================
+  db:
+    image: mysql:8.0
+
+    container_name: linkupdate-dev-db
+
     restart: unless-stopped
 
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+
+    # Development: port 3306 może być expose jeśli potrzebujesz dostępu z hosta
+    # Dla bezpieczeństwa, możesz go zakomentować jeśli nie jest potrzebny
+    ports:
+      - "${DATABASE_PORT:-3306}:3306"
+
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+
+    networks:
+      - linkupdate-network
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# ============================================================================
+# Networks
+# ============================================================================
 networks:
-  ngnix_my_bridge:
-    external: true 
+  linkupdate-network:
+    driver: bridge
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  mysql-dev-data:
+    driver: local 

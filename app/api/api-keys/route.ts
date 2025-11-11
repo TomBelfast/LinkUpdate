@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth/auth-config';
 import mysql from 'mysql2/promise';
 
 // Database connection
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
       const [newApiKey] = await connection.execute(
         'SELECT * FROM api_keys WHERE id = ?',
         [apiKeyId]
-      );
-      
+      ) as any[];
+
       return NextResponse.json(newApiKey[0], { status: 201 });
       
     } finally {

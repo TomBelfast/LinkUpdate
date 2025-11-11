@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getDbInstance } from '@/db';
+import { getDb } from '@/lib/db';
 import { links } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: rawId } = await params;
+    const id = parseInt(rawId);
     console.log(`Pobieranie miniatury dla ID: ${id}`);
     
     if (isNaN(id)) {
@@ -16,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
     
-    const db = await getDbInstance();
+    const db = await getDb();
     const [prompt] = await db.select()
       .from(links)
       .where(eq(links.id, id));

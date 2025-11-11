@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { getDbInstance } from '@/db';
-import { links } from '@/db/schema';
+import { authOptions } from '@/lib/auth/auth-config';
+import { getDb } from '@/lib/db';
+import { links } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { UpdateLinkData, LinkResponse, ErrorResponse } from '@/app/types/api';
 
@@ -14,35 +14,35 @@ const validateId = (id: string): number | null => {
 
 // Funkcja pomocnicza do weryfikacji właścicielstwa
 const checkOwnership = async (linkId: number, userId: string) => {
-  const db = await getDbInstance();
+  const db = await getDb();
   const [link] = await db.select()
     .from(links)
     .where(eq(links.id, linkId));
-  
+
   if (!link) {
     return { error: 'Link nie został znaleziony', status: 404 };
   }
-  
+
   if (link.userId && link.userId !== userId) {
     return { error: 'Nie masz uprawnień do tej operacji', status: 403 };
   }
-  
+
   return { link };
 };
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
-  
-  const id = validateId(resolvedId);
+  const { id: rawId } = await params;
+
+  const id = validateId(rawId);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
 
   try {
-    const db = await getDbInstance();
+    const db = await getDb();
     const [link] = await db.select()
       .from(links)
       .where(eq(links.id, id));
@@ -64,17 +64,17 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
-  
-  const id = validateId(resolvedId);
+  const { id: rawId } = await params;
+
+  const id = validateId(rawId);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
 
   try {
-    const db = await getDbInstance();
+    const db = await getDb();
     // Sprawdzenie autoryzacji
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {
@@ -131,7 +131,7 @@ export async function PUT(
     });
 
     await db.update(links)
-      .set(updateData)
+      .set(updateData as any)
       .where(eq(links.id, id))
       .execute();
     
@@ -159,17 +159,17 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<LinkResponse | ErrorResponse>> {
-  const resolvedId = await Promise.resolve(params.id);
-  
-  const id = validateId(resolvedId);
+  const { id: rawId } = await params;
+
+  const id = validateId(rawId);
   if (id === null) {
     return NextResponse.json({ error: 'Nieprawidłowe ID', status: 400 });
   }
 
   try {
-    const db = await getDbInstance();
+    const db = await getDb();
     // Sprawdzenie autoryzacji
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {

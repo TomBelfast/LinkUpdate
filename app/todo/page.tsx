@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Idea } from '@/types/idea';
 import { toast } from 'react-hot-toast';
 
-export default function TodoPage({ ideas: initialIdeas = [] }: { ideas?: Idea[] }) {
-  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
+export default function TodoPage() {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();

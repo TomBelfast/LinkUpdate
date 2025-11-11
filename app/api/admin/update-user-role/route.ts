@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import mysql from "mysql2/promise";
 import jwt from "jsonwebtoken";
+import { env } from "@/lib/env";
 
 // Database connection function
 async function executeQuery(query: string, values: any[] = []) {
@@ -23,7 +24,7 @@ async function executeQuery(query: string, values: any[] = []) {
 
 // Get user from session token
 async function getUserFromSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionToken = cookieStore.get("next-auth.session-token")?.value;
   
   if (!sessionToken) {
@@ -32,7 +33,7 @@ async function getUserFromSession() {
 
   try {
     // Verify and decode the JWT token
-    const secret = process.env.NEXTAUTH_SECRET || "your-secret-key-change-in-production";
+    const secret = env.NEXTAUTH_SECRET;
     const decoded = jwt.verify(sessionToken, secret) as any;
 
     if (!decoded || !decoded.email) {

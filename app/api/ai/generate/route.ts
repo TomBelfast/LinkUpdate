@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrchestrator, AIOptions } from '@/lib/ai/ai-service';
+import { rateLimitAI } from '@/lib/rate-limit';
 
 interface GenerateRequest {
   prompt: string;
@@ -25,6 +26,10 @@ interface GenerateResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateResponse>> {
+  // SECURITY: Rate limiting - protect expensive AI operations
+  const rateLimitResult = await rateLimitAI(request);
+  if (rateLimitResult) return rateLimitResult as NextResponse<GenerateResponse>;
+
   try {
     const body: GenerateRequest = await request.json();
     

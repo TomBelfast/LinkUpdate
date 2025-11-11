@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import { env } from '@/lib/env';
 
 /**
  * Database Connection Pool Manager
@@ -7,7 +8,7 @@ import mysql from 'mysql2/promise';
 class DatabasePool {
   private pool: mysql.Pool | null = null;
   private static instance: DatabasePool;
-  
+
   /**
    * Singleton pattern to ensure single pool instance
    */
@@ -17,20 +18,20 @@ class DatabasePool {
     }
     return DatabasePool.instance;
   }
-  
+
   /**
    * Get or create the database connection pool
    */
   async getPool(): Promise<mysql.Pool> {
     if (!this.pool) {
       console.log('🔄 Creating database connection pool...');
-      
+
       this.pool = mysql.createPool({
-        host: process.env.DATABASE_HOST || 'localhost',
-        user: process.env.DATABASE_USER || 'testToDo',
-        password: process.env.DATABASE_PASSWORD || 'testToDo',
-        database: process.env.DATABASE_NAME || 'ToDo',
-        port: Number(process.env.DATABASE_PORT) || 3306,
+        host: env.DATABASE_HOST,
+        user: env.DATABASE_USER,
+        password: env.DATABASE_PASSWORD,
+        database: env.DATABASE_NAME,
+        port: env.DATABASE_PORT,
         
         // Connection pool settings
         waitForConnections: true,

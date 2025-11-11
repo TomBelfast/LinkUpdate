@@ -3,6 +3,7 @@ import mysql, { RowDataPacket, Pool } from 'mysql2/promise';
 import * as schema from './schema';
 import fs from 'fs/promises';
 import path from 'path';
+import { env } from '@/lib/env';
 
 // Stałe konfiguracyjne
 const CONFIG = {
@@ -42,11 +43,11 @@ interface DatabaseConfig {
 // Funkcja do pobierania konfiguracji bazy danych
 function getDatabaseConfig(): DatabaseConfig {
   return {
-    host: process.env.DATABASE_HOST || '192.168.0.4',
-    user: process.env.DATABASE_USER || 'test1',
-    password: process.env.DATABASE_PASSWORD || 'test1',
-    database: process.env.DATABASE_NAME || 'BOLT',
-    port: parseInt(process.env.DATABASE_PORT || '38155'),
+    host: env.DATABASE_HOST,
+    user: env.DATABASE_USER,
+    password: env.DATABASE_PASSWORD,
+    database: env.DATABASE_NAME,
+    port: env.DATABASE_PORT,
   };
 }
 

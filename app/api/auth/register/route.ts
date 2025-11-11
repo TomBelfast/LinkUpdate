@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery } from "@/lib/db-pool";
+import { rateLimitAuth } from "@/lib/rate-limit";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 
@@ -9,9 +10,12 @@ async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, saltRounds);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // SECURITY: Rate limiting - prevent brute force attacks
+  const rateLimitResult = await rateLimitAuth(request);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
-    
     // Get request body
     const body = await request.json();
     const { name, email, password } = body;

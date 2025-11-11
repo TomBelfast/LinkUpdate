@@ -1,27 +1,29 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { ideas } from '@/db/schema';
+import { getDb } from '@/lib/db';
+import { ideas } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 // PUT /api/ideas/[id] - aktualizuj pomysł
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const data = await request.json();
+    const db = await getDb();
     await db
       .update(ideas)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(ideas.id, params.id));
+      .where(eq(ideas.id, id));
     
     const updatedIdea = await db
       .select()
       .from(ideas)
-      .where(eq(ideas.id, params.id))
+      .where(eq(ideas.id, id))
       .then(res => res[0]);
     
     return NextResponse.json(updatedIdea);
@@ -37,10 +39,12 @@ export async function PUT(
 // DELETE /api/ideas/[id] - usuń pomysł
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await db.delete(ideas).where(eq(ideas.id, params.id));
+    const { id } = await params;
+    const db = await getDb();
+    await db.delete(ideas).where(eq(ideas.id, id));
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Błąd podczas usuwania pomysłu:', error);

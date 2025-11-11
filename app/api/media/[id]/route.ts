@@ -1,28 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getDbInstance } from '@/db';
-import { links } from '@/db/schema';
+import { getDb } from '@/lib/db';
+import { links } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    
+    const { id: rawId } = await params;
+    const id = parseInt(rawId);
+
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Nieprawidłowe ID' }, { status: 400 });
     }
-    
-    const db = await getDbInstance();
+
+    const db = await getDb();
     const [prompt] = await db.select()
       .from(links)
       .where(eq(links.id, id));
-    
+
     if (!prompt || !prompt.imageData || !prompt.imageMimeType) {
       return NextResponse.json({ error: 'Obraz nie został znaleziony' }, { status: 404 });
     }
-    
+
     // Ustal właściwy bufor obrazu niezależnie od formatu zwracanego przez DB
     let imageBuffer: Buffer;
     if (Buffer.isBuffer(prompt.imageData)) {
@@ -37,7 +38,7 @@ export async function GET(
       // ostateczny fallback
       imageBuffer = Buffer.from(String(prompt.imageData ?? ''), 'binary');
     }
-    
+
     // Zwróć obraz z odpowiednim typem MIME
     return new NextResponse(imageBuffer, {
       headers: {
