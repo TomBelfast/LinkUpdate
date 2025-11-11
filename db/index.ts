@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/mysql2';
-import mysql, { RowDataPacket } from 'mysql2/promise';
+import mysql, { RowDataPacket, Pool } from 'mysql2/promise';
 import * as schema from './schema';
 import fs from 'fs/promises';
 import path from 'path';
@@ -12,6 +12,11 @@ const CONFIG = {
   KEEPALIVE_DELAY: 10000,
   MAX_PREPARED_STATEMENTS: 16000,
   BATCH_SIZE: 10, // Liczba zapytań wykonywanych w jednej transakcji
+  POOL: {
+    MAX_CONNECTIONS: 20,
+    MAX_QUEUE_SIZE: 100,
+    IDLE_TIMEOUT: 0, // 0 = połączenia nie są zamykane automatycznie
+  }
 } as const;
 
 // Flaga wskazująca czy migracja została już wykonana
@@ -142,77 +147,137 @@ export async function runMigrations(connection: mysql.Connection): Promise<void>
   }
 }
 
-// Funkcja do tworzenia połączenia z obsługą ponownych prób
-async function createConnection(retryCount = 0): Promise<ReturnType<typeof drizzle>> {
-  try {
-    const config = getDatabaseConfig();
-    const connection = await mysql.createConnection({
-      ...config,
-      multipleStatements: true,
-      charset: 'utf8mb4',
-      connectTimeout: CONFIG.CONNECTION_TIMEOUT,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: CONFIG.KEEPALIVE_DELAY,
-      maxPreparedStatements: CONFIG.MAX_PREPARED_STATEMENTS,
-      namedPlaceholders: true,
-      dateStrings: true,
-      flags: [
-        '-FOUND_ROWS',
-        '-IGNORE_SPACE',
-        '+LONG_FLAG',
-        '+LONG_PASSWORD',
-        '+PROTOCOL_41',
-        '+TRANSACTIONS',
-        '+MULTI_RESULTS',
-        '+PS_MULTI_RESULTS',
-        '+SECURE_CONNECTION',
-        '+CONNECT_WITH_DB'
-      ],
-    });
+// Singleton dla pool połączeń
+let pool: Pool | null = null;
+let isInitialized: boolean = false;
 
-    // Obsługa zdarzeń połączenia
-    connection.on('error', async (err: mysql.QueryError) => {
-      console.error('Błąd połączenia z bazą danych:', err);
-      if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-        console.log('Próba ponownego połączenia...');
-        await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
-        return createConnection(retryCount + 1);
+// Funkcja do tworzenia pool połączeń
+function createPool(): Pool {
+  if (pool) {
+    return pool;
+  }
+
+  const config = getDatabaseConfig();
+  pool = mysql.createPool({
+    ...config,
+    // Pool configuration - tylko opcje obsługiwane przez mysql2
+    connectionLimit: CONFIG.POOL.MAX_CONNECTIONS,
+    queueLimit: CONFIG.POOL.MAX_QUEUE_SIZE,
+    waitForConnections: true,
+    
+    // Connection settings
+    multipleStatements: true,
+    charset: 'utf8mb4',
+    connectTimeout: CONFIG.CONNECTION_TIMEOUT,
+    
+    // Keep-alive settings - zapobiegają rozłączaniu połączeń
+    enableKeepAlive: true,
+    keepAliveInitialDelay: CONFIG.KEEPALIVE_DELAY,
+    
+    // Prepared statements
+    maxPreparedStatements: CONFIG.MAX_PREPARED_STATEMENTS,
+    
+    // Query options
+    namedPlaceholders: true,
+    dateStrings: true,
+    
+    // idleTimeout: 0 oznacza że połączenia nie są zamykane automatycznie
+    // Serwer MySQL zarządza timeoutami po swojej stronie
+    // To zapobiega błędom "connection is in closed state"
+    idleTimeout: CONFIG.POOL.IDLE_TIMEOUT,
+    
+    // MySQL connection flags
+    flags: [
+      '-FOUND_ROWS',
+      '-IGNORE_SPACE',
+      '+LONG_FLAG',
+      '+LONG_PASSWORD',
+      '+PROTOCOL_41',
+      '+TRANSACTIONS',
+      '+MULTI_RESULTS',
+      '+PS_MULTI_RESULTS',
+      '+SECURE_CONNECTION',
+      '+CONNECT_WITH_DB'
+    ],
+  });
+
+  // Obsługa zdarzeń puli
+  pool.on('acquire', (connection) => {
+    console.debug('Połączenie pobrane z puli');
+  });
+
+  pool.on('connection', (connection) => {
+    console.debug('Nowe połączenie utworzone');
+    
+    // Obsługa błędów połączenia - automatyczne odtwarzanie
+    connection.on('error', (err: mysql.QueryError) => {
+      console.error('❌ Błąd połączenia z bazą danych:', {
+        code: err.code,
+        errno: err.errno,
+        sqlState: err.sqlState,
+        message: err.message
+      });
+      
+      // Jeśli połączenie zostało zamknięte, pool automatycznie utworzy nowe
+      // Nie trzeba ręcznie odtwarzać - mysql2 pool to obsługuje
+      if (err.code === 'PROTOCOL_CONNECTION_LOST' || 
+          err.code === 'ECONNRESET' ||
+          err.code === 'ETIMEDOUT') {
+        console.log('🔄 Pool automatycznie odtworzy połączenie przy następnym zapytaniu');
       }
-      throw err;
     });
+  });
 
-    // Test połączenia
-    await connection.execute('SELECT 1');
-    console.log('✅ Połączenie z bazą danych działa poprawnie');
+  pool.on('release', (connection) => {
+    console.debug('Połączenie zwrócone do puli');
+  });
 
-    // Wykonaj migrację tylko jeśli nie została jeszcze wykonana
-    if (!migrationCompleted) {
-      await runMigrations(connection);
-    }
+  pool.on('enqueue', () => {
+    console.warn('⚠️ Oczekiwanie na dostępne połączenie');
+  });
 
-    return drizzle(connection, { schema, mode: 'default' });
+  return pool;
+}
 
-  } catch (err) {
-    console.error('❌ Błąd podczas inicjalizacji połączenia:', err);
+// Funkcja do inicjalizacji pool i migracji
+async function initializePool(): Promise<void> {
+  if (isInitialized) {
+    return;
+  }
+
+  try {
+    const poolInstance = createPool();
+    const connection = await poolInstance.getConnection();
     
-    if (retryCount < CONFIG.MAX_RETRIES) {
-      console.log(`Ponowna próba połączenia (${retryCount + 1}/${CONFIG.MAX_RETRIES})...`);
-      await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
-      return createConnection(retryCount + 1);
+    try {
+      await connection.execute('SELECT 1');
+      console.log('✅ Połączenie z bazą danych działa poprawnie');
+
+      // Wykonaj migrację tylko jeśli nie została jeszcze wykonana
+      if (!migrationCompleted) {
+        await runMigrations(connection);
+      }
+
+      isInitialized = true;
+    } finally {
+      connection.release();
     }
-    
-    throw new Error(`Nie udało się połączyć z bazą danych po ${CONFIG.MAX_RETRIES} próbach`);
+  } catch (error) {
+    console.error('❌ Błąd podczas inicjalizacji pool:', error);
+    throw error;
   }
 }
 
-// Singleton dla instancji bazy danych
+// Singleton dla instancji Drizzle
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
 // Funkcja do pobierania instancji bazy danych
 export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   if (!dbInstance) {
     try {
-      dbInstance = await createConnection();
+      await initializePool();
+      const poolInstance = createPool();
+      dbInstance = drizzle(poolInstance, { schema, mode: 'default' });
     } catch (error) {
       console.error('Błąd podczas tworzenia połączenia:', error);
       throw error;
@@ -222,39 +287,41 @@ export async function getDb(): Promise<ReturnType<typeof drizzle>> {
 }
 
 export async function getDbInstance(): Promise<ReturnType<typeof drizzle>> {
-  if (!dbInstance) {
-    dbInstance = await getDb();
-  }
-  return dbInstance;
+  return getDb();
 }
 
 // Eksportujemy bezpośrednio funkcję getDb dla kompatybilności
 export { getDb as db };
 
-// Obsługa zamykania połączenia
+// Obsługa zamykania pool
 process.on('SIGINT', async () => {
-  if (dbInstance) {
+  if (pool) {
     try {
-      console.log('Zamykanie połączenia z bazą danych...');
-      const connection = (dbInstance as any).connection;
-      if (connection?.end) {
-        await connection.end();
-        console.log('Połączenie z bazą danych zostało zamknięte');
-      }
+      console.log('Zamykanie pool połączeń z bazą danych...');
+      await pool.end();
+      console.log('Pool połączeń z bazą danych został zamknięty');
+      pool = null;
+      dbInstance = null;
+      isInitialized = false;
     } catch (error) {
-      console.error('Błąd podczas zamykania połączenia:', error);
+      console.error('Błąd podczas zamykania pool:', error);
     }
   }
   process.exit(0);
 });
 
-// Obsługa nieoczekiwanych błędów
-process.on('unhandledRejection', (error) => {
-  console.error('Nieobsłużony błąd Promise:', error);
-  if (dbInstance) {
-    const connection = (dbInstance as any).connection;
-    if (connection?.end) {
-      connection.end().catch(console.error);
+process.on('SIGTERM', async () => {
+  if (pool) {
+    try {
+      console.log('Zamykanie pool połączeń z bazą danych...');
+      await pool.end();
+      console.log('Pool połączeń z bazą danych został zamknięty');
+      pool = null;
+      dbInstance = null;
+      isInitialized = false;
+    } catch (error) {
+      console.error('Błąd podczas zamykania pool:', error);
     }
   }
+  process.exit(0);
 });

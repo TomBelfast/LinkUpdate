@@ -16,10 +16,10 @@ const CONFIG = {
   POOL: {
     MIN_CONNECTIONS: 5,
     MAX_CONNECTIONS: 20,
-    ACQUIRE_TIMEOUT: 30000,
-    IDLE_TIMEOUT: 300000,  // 5 minut - zwiększone z 10s aby zapobiec rozłączaniu
     MAX_QUEUE_SIZE: 100,
-    QUEUE_TIMEOUT: 5000
+    // idleTimeout - czas w ms po którym nieaktywne połączenie jest zamykane
+    // Ustawione na 0 = połączenia nie są zamykane automatycznie (zarządza serwer MySQL)
+    IDLE_TIMEOUT: 0,
   }
 } as const;
 
@@ -114,20 +114,33 @@ class DatabasePool {
     const config = getDatabaseConfig();
     this.pool = mysql.createPool({
       ...config,
+      // Pool configuration - tylko opcje obsługiwane przez mysql2
       connectionLimit: CONFIG.POOL.MAX_CONNECTIONS,
       queueLimit: CONFIG.POOL.MAX_QUEUE_SIZE,
       waitForConnections: true,
+      
+      // Connection settings
       multipleStatements: true,
       charset: 'utf8mb4',
       connectTimeout: CONFIG.CONNECTION_TIMEOUT,
+      
+      // Keep-alive settings - zapobiegają rozłączaniu połączeń
       enableKeepAlive: true,
       keepAliveInitialDelay: CONFIG.KEEPALIVE_DELAY,
+      
+      // Prepared statements
       maxPreparedStatements: CONFIG.MAX_PREPARED_STATEMENTS,
+      
+      // Query options
       namedPlaceholders: true,
       dateStrings: true,
-      // acquireTimeout nie jest obsługiwane przez mysql2 - usunięte
-      // idleTimeout jest obsługiwane przez mysql2
+      
+      // idleTimeout: 0 oznacza że połączenia nie są zamykane automatycznie
+      // Serwer MySQL zarządza timeoutami po swojej stronie
+      // To zapobiega błędom "connection is in closed state"
       idleTimeout: CONFIG.POOL.IDLE_TIMEOUT,
+      
+      // MySQL connection flags
       flags: [
         '-FOUND_ROWS',
         '-IGNORE_SPACE',
@@ -149,6 +162,24 @@ class DatabasePool {
 
     this.pool.on('connection', (connection) => {
       console.debug('Nowe połączenie utworzone');
+      
+      // Obsługa błędów połączenia - automatyczne odtwarzanie
+      connection.on('error', (err: mysql.QueryError) => {
+        console.error('❌ Błąd połączenia z bazą danych:', {
+          code: err.code,
+          errno: err.errno,
+          sqlState: err.sqlState,
+          message: err.message
+        });
+        
+        // Jeśli połączenie zostało zamknięte, pool automatycznie utworzy nowe
+        // Nie trzeba ręcznie odtwarzać - mysql2 pool to obsługuje
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || 
+            err.code === 'ECONNRESET' ||
+            err.code === 'ETIMEDOUT') {
+          console.log('🔄 Pool automatycznie odtworzy połączenie przy następnym zapytaniu');
+        }
+      });
     });
 
     this.pool.on('release', (connection) => {
@@ -156,14 +187,7 @@ class DatabasePool {
     });
 
     this.pool.on('enqueue', () => {
-      console.warn('Oczekiwanie na dostępne połączenie');
-    });
-
-    // Obsługa błędów - mysql2 emituje błędy przez connection events
-    this.pool.on('connection' as any, (connection: any) => {
-      connection.on('error', (err: Error) => {
-        console.error('Błąd połączenia z bazą danych:', err);
-      });
+      console.warn('⚠️ Oczekiwanie na dostępne połączenie');
     });
   }
 
