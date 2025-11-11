@@ -109,8 +109,8 @@ export async function POST(request: Request) {
       title: newPrompt.title,
       hasImage: !!newPrompt.imageData,
       hasThumbnail: !!newPrompt.thumbnailData,
-      imageData: newPrompt.imageData ? `[${Buffer.isBuffer(newPrompt.imageData) ? newPrompt.imageData.length : 'nie-Buffer'] bajtów]` : null,
-      thumbnailData: newPrompt.thumbnailData ? `[${Buffer.isBuffer(newPrompt.thumbnailData) ? newPrompt.thumbnailData.length : 'nie-Buffer'] bajtów]` : null
+      imageData: newPrompt.imageData ? `[${Buffer.isBuffer(newPrompt.imageData) ? newPrompt.imageData.length.toString() : 'nie-Buffer'} bajtów]` : null,
+      thumbnailData: newPrompt.thumbnailData ? `[${Buffer.isBuffer(newPrompt.thumbnailData) ? newPrompt.thumbnailData.length.toString() : 'nie-Buffer'} bajtów]` : null
     });
 
     return NextResponse.json(newPrompt);

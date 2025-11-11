@@ -62,10 +62,11 @@ ENV NODE_ENV=${NODE_ENV:-development}
 
 # Verify npm is available and build
 RUN which npm && npm --version || echo "npm not found"
+# Build with increased memory allocation for large builds
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  elif [ -f package-lock.json ]; then NODE_OPTIONS=--max_old_space_size=4096 npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && NODE_OPTIONS=--max_old_space_size=4096 pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
