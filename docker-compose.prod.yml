@@ -1,6 +1,6 @@
 # ============================================================================
 # Docker Compose - Production Configuration
-# For deployment with MySQL database
+# For deployment with external MySQL database
 # ============================================================================
 
 version: '3.8'
@@ -29,8 +29,8 @@ services:
       # Node Environment
       NODE_ENV: production
 
-      # Database Configuration
-      DATABASE_HOST: ${DATABASE_HOST:-db}
+      # Database Configuration (External MySQL on 192.168.0.9)
+      DATABASE_HOST: ${DATABASE_HOST:-192.168.0.9}
       DATABASE_PORT: ${DATABASE_PORT:-3306}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
@@ -50,65 +50,9 @@ services:
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
       PPLX_API_KEY: ${PPLX_API_KEY:-}
 
-    depends_on:
-      db:
-        condition: service_healthy
-
-    networks:
-      - linkupdate-network
-
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 40s
-
-  # ============================================================================
-  # MySQL Database
-  # ============================================================================
-  db:
-    image: mysql:8.0
-
-    container_name: linkupdate-db
-
-    restart: unless-stopped
-
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE_NAME}
-      MYSQL_USER: ${DATABASE_USER}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-
-    # Port 3306 NIE jest expose na zewnątrz - dostępny tylko w internal network
-    # Jeśli potrzebujesz dostępu z hosta (np. do debugowania), odkomentuj poniżej:
-    # ports:
-    #   - "3306:3306"
-
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./init-db:/docker-entrypoint-initdb.d:ro
-
-    networks:
-      - linkupdate-network
-
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
-
-# ============================================================================
-# Networks
-# ============================================================================
-networks:
-  linkupdate-network:
-    driver: bridge
-
-# ============================================================================
-# Volumes
-# ============================================================================
-volumes:
-  mysql-data:
-    driver: local

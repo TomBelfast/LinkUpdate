@@ -25,7 +25,7 @@
     },
     {
       "key": "DATABASE_HOST",
-      "value": "db",
+      "value": "192.168.0.9",
       "is_build_time": false,
       "is_literal": true
     },
@@ -61,7 +61,7 @@
       "value": "",
       "is_build_time": false,
       "is_literal": false,
-      "is_required": true
+      "is_required": false
     },
     {
       "key": "GOOGLE_ID",
@@ -99,12 +99,7 @@
       "protocol": "tcp"
     }
   ],
-  "volumes": [
-    {
-      "name": "mysql-data",
-      "mount_path": "/var/lib/mysql"
-    }
-  ],
+  "volumes": [],
   "health_check": {
     "enabled": true,
     "test": ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"],
