@@ -68,7 +68,7 @@ temp/
 *.db
 
 # Drizzle
-drizzle/
+# drizzle/ - Keep drizzle migrations for runtime
 
 # PM2
 ecosystem.config.js
