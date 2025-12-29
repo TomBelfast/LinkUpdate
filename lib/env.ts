@@ -168,12 +168,21 @@ export function isTest(): boolean {
 if (typeof window === 'undefined') {
   // Only validate on server-side (not in browser)
   try {
-    validateEnv();
-    console.log('✅ Environment variables validated successfully');
+    // Skip validation during build phase or if explicitly requested
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' ||
+      process.env.CI === 'true' ||
+      process.env.SKIP_ENV_VALIDATION === 'true';
+
+    if (!isBuildPhase) {
+      validateEnv();
+      console.log('✅ Environment variables validated successfully');
+    } else {
+      console.log('ℹ️ Skipping detailed environment validation during build phase');
+    }
   } catch (error) {
     console.error('❌ Environment validation failed during module load');
-    // In development, we want to see the error but not crash
-    if (process.env.NODE_ENV === 'production') {
+    // In production, we want to fail fast unless it's the build phase
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
       process.exit(1);
     }
   }
