@@ -15,7 +15,7 @@ export default function Header() {
   if (!mounted) {
     return (
       <header className="bg-gray-900 text-white p-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="container mx-auto px-4">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-700 rounded w-1/4 mb-4"></div>
             <div className="h-6 bg-gray-700 rounded w-full mb-2"></div>
@@ -28,7 +28,7 @@ export default function Header() {
 
   return (
     <header className="bg-gray-900 text-white p-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto px-4">
         {/* Pierwszy rząd - główne linki */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
