@@ -22,6 +22,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN mkdir -p public
 
 # Next.js telemetry disabled
 ENV NEXT_TELEMETRY_DISABLED 1
