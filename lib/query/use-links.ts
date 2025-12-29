@@ -18,24 +18,74 @@ interface UpdateLinkData extends Partial<Omit<LinkType, 'id' | 'createdAt' | 'us
 interface LinkFilters {
   search?: string;
   userId?: string;
+  page?: number;
+  limit?: number;
 }
 
-// Fetch links query hook
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Fetch links query hook (zwraca tylko dane dla kompatybilności)
 export function useLinks(filters?: LinkFilters): UseQueryResult<Link[], Error> {
   return useQuery({
     queryKey: queryKeys.linksList(filters),
     queryFn: async (): Promise<Link[]> => {
       const searchParams = new URLSearchParams();
-      
+
       if (filters?.search) {
         searchParams.append('search', filters.search);
       }
       if (filters?.userId) {
         searchParams.append('userId', filters.userId);
       }
-      
+      if (filters?.page) {
+        searchParams.append('page', filters.page.toString());
+      }
+      if (filters?.limit) {
+        searchParams.append('limit', filters.limit.toString());
+      }
+
       const url = `/api/links${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      return fetchWithErrorHandling<Link[]>(url);
+      const response = await fetchWithErrorHandling<PaginatedResponse<Link>>(url);
+      return response.data;
+    },
+    meta: {
+      errorMessage: 'Failed to fetch links',
+    },
+  });
+}
+
+// Fetch links with pagination metadata
+export function useLinksPaginated(filters?: LinkFilters): UseQueryResult<PaginatedResponse<Link>, Error> {
+  return useQuery({
+    queryKey: [...queryKeys.linksList(filters), 'paginated'],
+    queryFn: async (): Promise<PaginatedResponse<Link>> => {
+      const searchParams = new URLSearchParams();
+
+      if (filters?.search) {
+        searchParams.append('search', filters.search);
+      }
+      if (filters?.userId) {
+        searchParams.append('userId', filters.userId);
+      }
+      if (filters?.page) {
+        searchParams.append('page', filters.page.toString());
+      }
+      if (filters?.limit) {
+        searchParams.append('limit', filters.limit.toString());
+      }
+
+      const url = `/api/links${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      return fetchWithErrorHandling<PaginatedResponse<Link>>(url);
     },
     meta: {
       errorMessage: 'Failed to fetch links',

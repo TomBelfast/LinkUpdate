@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { executeQuery } from "@/lib/db-pool";
+import { executeQuery } from "@/lib/db";
 import { rateLimitAuth } from "@/lib/rate-limit";
 import crypto from "crypto";
 import bcrypt from "bcrypt";

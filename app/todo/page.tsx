@@ -111,7 +111,7 @@ export default function TodoPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <h1 className="text-3xl font-bold mb-8 text-white">Ideas List</h1>
       
       {editingIdea ? (
@@ -143,8 +143,8 @@ export default function TodoPage() {
             >
               <h3 className="text-xl font-semibold mb-2 text-white">{idea.title}</h3>
               <p className="text-gray-300 mb-4">{idea.description}</p>
-              <div className="flex justify-between items-center">
-                <span className={`gradient-button py-2 px-3 text-sm rounded-full flex items-center justify-center font-medium ${
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <span className={`gradient-button py-1.5 px-3 text-xs rounded-full inline-flex items-center justify-center font-medium ${
                   idea.status === 'pending' ? 'text-amber-400' :
                   idea.status === 'in_progress' ? 'text-blue-400' :
                   idea.status === 'completed' ? 'text-green-400' :
@@ -155,12 +155,12 @@ export default function TodoPage() {
                    idea.status === 'completed' ? 'Completed' :
                    'Rejected'}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setEditingIdea(idea)}
-                    className="gradient-button py-2 px-3 text-sm rounded-full flex items-center justify-center font-medium text-emerald-400"
+                    className="gradient-button edit-gradient py-1.5 px-3 text-xs rounded-full inline-flex items-center"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
@@ -168,9 +168,9 @@ export default function TodoPage() {
                   </button>
                   <button
                     onClick={() => handleDeleteIdea(idea.id)}
-                    className="gradient-button py-2 px-3 text-sm rounded-full flex items-center justify-center font-medium text-rose-400"
+                    className="gradient-button delete-gradient py-1.5 px-3 text-xs rounded-full inline-flex items-center"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 6h18" />
                       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
                       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />

@@ -8,7 +8,7 @@ import Image from 'next/image';
 
 // Modern state management
 import { useAppStore } from '@/lib/store/app-store';
-import { useLinks, useCreateLink, useUpdateLink, useDeleteLink } from '@/lib/query/use-links';
+import { useLinksSearch, useCreateLink, useUpdateLink, useDeleteLink } from '@/lib/query/use-links';
 import { useToasts, useError } from '@/lib/store/app-store';
 
 // Dynamicznie importujemy komponenty z headlessui (zachowujemy dla performance)
@@ -51,11 +51,12 @@ export default function Links() {
   const { error, setError } = useError();
   
   // TanStack Query hooks (replaces manual fetch + useEffect)
-  const { 
-    data: links = [], 
-    isLoading, 
-    error: linksError 
-  } = useLinks({ search: searchQuery });
+  // useLinksSearch z 300ms debounce dla optymalizacji
+  const {
+    data: links = [],
+    isLoading,
+    error: linksError
+  } = useLinksSearch(searchQuery, 300);
   
   // Mutations (replaces manual fetch in handlers)  
   const createLink = useCreateLink();
@@ -177,7 +178,7 @@ export default function Links() {
 
   if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-700 rounded w-1/4 mb-8"></div>
           <div className="h-32 bg-gray-700 rounded mb-8"></div>
@@ -192,7 +193,7 @@ export default function Links() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <h1 className="text-3xl font-bold mb-8 text-white">Links</h1>
       
       {session ? (
@@ -323,37 +324,36 @@ export default function Links() {
                   )}
                 </div>
                 
-                <div className="flex space-x-2">
-                  {/* ZACHOWUJEMY wszystkie gradienty! */}
+                <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
                   <button
                     onClick={() => handleCopy(link.url)}
-                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm"
                   >
                     Copy
                   </button>
-                  
+
                   <button
                     onClick={() => handleShare(link)}
-                    className="gradient-button share-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                    className="gradient-button share-gradient px-3 py-1 rounded text-sm"
                   >
                     Share
                   </button>
-                  
+
                   {session && (
                     <>
                       <button
                         onClick={() => handleEdit(link)}
-                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm"
                       >
                         Edit
                       </button>
-                      
+
                       <button
                         onClick={() => handleDelete(link.id)}
                         disabled={deleteLink.isPending}
-                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm disabled:opacity-50"
                       >
-                        {deleteLink.isPending ? 'Deleting...' : 'Delete'}
+                        {deleteLink.isPending ? '...' : 'Delete'}
                       </button>
                     </>
                   )}

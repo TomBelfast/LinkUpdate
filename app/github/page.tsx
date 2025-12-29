@@ -264,7 +264,7 @@ export default function GitHub() {
 
   if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-700 rounded w-1/4 mb-8"></div>
           <div className="h-32 bg-gray-700 rounded mb-8"></div>
@@ -279,7 +279,7 @@ export default function GitHub() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <h1 className="text-3xl font-bold mb-8 text-white">GitHub Repositories</h1>
       
       {session ? (
@@ -503,26 +503,26 @@ export default function GitHub() {
                   )}
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
                   <button
                     onClick={() => handleCopy(repo.html_url)}
-                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm"
                   >
                     Copy
                   </button>
-                  
+
                   <button
                     onClick={() => handleShare(repo)}
-                    className="gradient-button share-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                    className="gradient-button share-gradient px-3 py-1 rounded text-sm"
                   >
                     Share
                   </button>
-                  
+
                   {session && (
                     <>
                       <button
                         onClick={() => handleEdit(repo)}
-                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm"
                       >
                         Edit
                       </button>
@@ -539,15 +539,15 @@ export default function GitHub() {
                             addToast('Nie udało się wygenerować opisu', 'error');
                           }
                         }}
-                        className="gradient-button copy-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button copy-gradient px-3 py-1 rounded text-sm"
                         title="Użyj Perplexity do wygenerowania opisu"
                       >
-                        Użyj Perplexity
+                        Perplexity
                       </button>
-                      
+
                       <button
                         onClick={() => handleDelete(repo.id)}
-                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm"
                       >
                         Delete
                       </button>

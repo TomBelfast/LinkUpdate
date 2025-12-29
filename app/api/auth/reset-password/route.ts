@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import mysql from "mysql2/promise";
-import crypto from "crypto";
-
-// Funkcja hashowania hasła - zastępuje bcrypt
-async function hashPassword(password: string): Promise<string> {
-  // Generowanie soli - prosta implementacja
-  const salt = crypto.randomBytes(16).toString('hex');
-  
-  // Zastosowanie funkcji skrótu SHA-256
-  const hash = crypto.createHash('sha256');
-  hash.update(salt + password);
-  const hashedValue = salt + '$' + hash.digest('hex');
-  
-  return hashedValue;
-}
+import bcrypt from "bcrypt";
+import { rateLimitAuth } from "@/lib/rate-limit";
 
 // Database connection function
 async function executeQuery(query: string, values: any[] = []) {
@@ -35,6 +23,12 @@ async function executeQuery(query: string, values: any[] = []) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - zwraca NextResponse jeśli limit przekroczony, null jeśli ok
+    const rateLimitResult = await rateLimitAuth(request);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     // Get request body
     const body = await request.json();
     const { token, password } = body;
@@ -56,27 +50,22 @@ export async function POST(request: NextRequest) {
 
     // Upewnijmy się, że kolumny reset_token i reset_token_expires istnieją
     try {
-      // Sprawdź czy kolumny istnieją
       const columns = await executeQuery(`
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_NAME = 'users' AND TABLE_SCHEMA = ?
         AND COLUMN_NAME IN ('reset_token', 'reset_token_expires', 'password')
       `, [process.env.DATABASE_NAME]) as any[];
-      
-      // Sprawdź czy wszystkie potrzebne kolumny istnieją
+
       const requiredColumns = ['reset_token', 'reset_token_expires', 'password'];
       const missingColumns = [];
-      
+
       for (const col of requiredColumns) {
         if (!columns.find(c => c.COLUMN_NAME === col)) {
           missingColumns.push(col);
         }
       }
-      
-      // Dodaj brakujące kolumny
+
       if (missingColumns.length > 0) {
-        console.log(`Brakujące kolumny: ${missingColumns.join(', ')}`);
-        
         for (const col of missingColumns) {
           if (col === 'reset_token') {
             await executeQuery(`ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) DEFAULT NULL`, []);
@@ -86,12 +75,9 @@ export async function POST(request: NextRequest) {
             await executeQuery(`ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT ''`, []);
           }
         }
-        
-        console.log("Dodano brakujące kolumny potrzebne do resetowania hasła");
       }
     } catch (error) {
-      console.error("Błąd podczas sprawdzania i dodawania kolumn:", error);
-      // Kontynuujemy, użytkownik prawdopodobnie dostanie błąd, ale przynajmniej będzie wiedział, że token jest nieprawidłowy
+      // Continue - user will get error if token is invalid
     }
 
     // Find user with valid reset token
@@ -102,7 +88,6 @@ export async function POST(request: NextRequest) {
         [token]
       ) as any[];
     } catch (error) {
-      console.error("Błąd podczas wyszukiwania użytkownika z tokenem resetowania:", error);
       return NextResponse.json(
         { message: "Invalid or expired reset token" },
         { status: 400 }
@@ -116,8 +101,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await hashPassword(password);
+    // Hash the new password with bcrypt (consistent with registration)
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Update user's password and clear reset token
     await executeQuery(
@@ -127,7 +112,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error in reset password:", error);
     return NextResponse.json(
       { message: "An error occurred while resetting your password" },
       { status: 500 }

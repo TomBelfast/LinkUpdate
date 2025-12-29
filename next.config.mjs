@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    allowedDevOrigins: ['172.24.108.30:9999', 'localhost:9999', '0.0.0.0:9999', 'link3.aihub.ovh'],
     serverActions: {
       bodySizeLimit: '2mb',
     },
@@ -15,8 +16,8 @@ const nextConfig = {
     scrollRestoration: true
   },
   images: {
-    domains: ['localhost', 'pollywood.zapto.org', 'i.ytimg.com'],
-    unoptimized: false,
+    domains: ['localhost', 'pollywood.zapto.org', 'i.ytimg.com', 'img.youtube.com'],
+    unoptimized: true,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ['image/webp'],
@@ -31,6 +32,11 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'i.ytimg.com',
+        pathname: '/vi/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
         pathname: '/vi/**',
       },
     ],
@@ -60,9 +66,7 @@ const nextConfig = {
         net: false,
         tls: false,
         child_process: false,
-        aws_sdk: false,
         nock: false,
-        mock_aws_s3: false,
         bcrypt: false,
         crypto: 'crypto-browserify',
         stream: 'stream-browserify',
@@ -118,7 +122,7 @@ const nextConfig = {
   },
   poweredByHeader: false,
   compress: true,
-  reactStrictMode: true,
+  reactStrictMode: false, // Zmienione na false jak w oryginalnym next.config.js dla kompatybilności
   modularizeImports: {
     '@headlessui/react': {
       transform: '@headlessui/react/{{member}}',

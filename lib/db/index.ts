@@ -257,5 +257,18 @@ export async function closeDb(): Promise<void> {
   }
 }
 
+// Funkcja executeQuery dla kompatybilności z poprzednim API
+export async function executeQuery(query: string, values: any[] = []): Promise<any[]> {
+  const pool = DatabasePool.getInstance();
+  await pool.initialize();
+  const connection = await pool.getPool().getConnection();
+  try {
+    const [results] = await connection.execute(query, values);
+    return results as any[];
+  } finally {
+    connection.release();
+  }
+}
+
 // Eksport typów
 export type Database = ReturnType<typeof drizzle>; 

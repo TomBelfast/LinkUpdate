@@ -1,15 +1,15 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Link as LinkType, Idea as IdeaType } from '@/db/schema';
-import { commonStyles } from '@/styles/common';
 import IdeaForm from '@/components/IdeaForm';
+import IdeaCard from '@/components/IdeaCard';
 import { v4 as uuidv4 } from 'uuid';
 
 // Modern state management
 import { useAppStore } from '@/lib/store/app-store';
-import { useLinks, useCreateLink, useUpdateLink, useDeleteLink } from '@/lib/query/use-links';
+import { useLinksSearch, useCreateLink, useUpdateLink, useDeleteLink } from '@/lib/query/use-links';
 import { useIdeas, useCreateIdea, useUpdateIdea, useDeleteIdea } from '@/lib/query/use-ideas';
 import { useToasts, useError } from '@/lib/store/app-store';
 
@@ -45,31 +45,32 @@ export default function Home() {
   const setEditingIdea = useAppStore((state) => state.setEditingIdea);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
-  
+
   // Toast notifications (replaces manual toast.success/error)
   const { addToast } = useToasts();
-  
+
   // Error handling (centralized)
   const { error, setError } = useError();
-  
+
   // TanStack Query hooks (replaces manual fetch + useEffect)
-  const { 
-    data: links = [], 
-    isLoading: linksLoading, 
-    error: linksError 
-  } = useLinks({ search: searchQuery });
-  
-  const { 
-    data: ideas = [], 
-    isLoading: ideasLoading, 
-    error: ideasError 
+  // useLinksSearch z 300ms debounce dla optymalizacji
+  const {
+    data: links = [],
+    isLoading: linksLoading,
+    error: linksError
+  } = useLinksSearch(searchQuery, 300);
+
+  const {
+    data: ideas = [],
+    isLoading: ideasLoading,
+    error: ideasError
   } = useIdeas();
-  
+
   // Mutations (replaces manual fetch in handlers)
   const createLink = useCreateLink();
   const updateLink = useUpdateLink();
   const deleteLink = useDeleteLink();
-  
+
   const createIdea = useCreateIdea();
   const updateIdea = useUpdateIdea();
   const deleteIdea = useDeleteIdea();
@@ -78,11 +79,10 @@ export default function Home() {
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const editId = params.get('edit');
-    
+
     if (editId && links.length > 0) {
       const linkToEdit = links.find(link => link.id === parseInt(editId));
       if (linkToEdit) {
-        console.log('Znaleziono link do edycji:', linkToEdit);
         setEditingLink(linkToEdit);
         const formElement = document.querySelector('#linkForm');
         formElement?.scrollIntoView({ behavior: 'smooth' });
@@ -102,8 +102,8 @@ export default function Home() {
     }
   }, [linksError, ideasError, setError, addToast]);
 
-  // Handlers (simplified with mutations)
-  const handleSubmit = async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
+  // Handlers z useCallback dla optymalizacji re-renderów
+  const handleSubmit = useCallback(async (data: Omit<LinkType, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     try {
       if (editingLink) {
         const { createdAt, updatedAt, userId, ...updateData } = data as any;
@@ -111,40 +111,37 @@ export default function Home() {
         setEditingLink(null);
       } else {
         await createLink.mutateAsync(data);
-        // Clear form
         const form = document.querySelector('form');
         if (form) {
           form.reset();
         }
       }
     } catch (error) {
-      console.error('Error while adding/editing link:', error);
       // Error handling is automatic through mutations
     }
-  };
+  }, [editingLink, updateLink, createLink, setEditingLink]);
 
-  const handleEdit = (link: LinkType) => {
+  const handleEdit = useCallback((link: LinkType) => {
     setEditingLink(link);
-  };
+  }, [setEditingLink]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = useCallback(async (id: number) => {
     if (!confirm('Are you sure you want to delete this link?')) {
       return;
     }
     try {
       await deleteLink.mutateAsync(id);
     } catch (error) {
-      console.error('Błąd podczas usuwania linku:', error);
       // Error handling is automatic through mutations
     }
-  };
+  }, [deleteLink]);
 
-  const handleCopy = (link: LinkType) => {
+  const handleCopy = useCallback((link: LinkType) => {
     navigator.clipboard.writeText(link.url);
     addToast('Link copied to clipboard!', 'success');
-  };
+  }, [addToast]);
 
-  const handleShare = (link: LinkType) => {
+  const handleShare = useCallback((link: LinkType) => {
     if (navigator.share) {
       navigator.share({
         title: link.title,
@@ -154,59 +151,26 @@ export default function Home() {
     } else {
       addToast('Sharing is not supported in this browser', 'warning');
     }
-  };
+  }, [addToast]);
 
-  const handleAddIdea = async (data: { title: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'rejected' }) => {
-    try {
-      const newIdea = {
-        id: uuidv4(),
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      await createIdea.mutateAsync(newIdea);
-    } catch (error) {
-      console.error('Błąd podczas dodawania pomysłu:', error);
-      // Error handling is automatic through mutations
-    }
-  };
-
-  const handleDeleteIdea = async (id: string) => {
+  const handleDeleteIdea = useCallback(async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) {
       return;
     }
-
     try {
       await deleteIdea.mutateAsync(id);
     } catch (error) {
-      console.error('Error while deleting idea:', error);
       // Error handling is automatic through mutations
     }
-  };
+  }, [deleteIdea]);
 
-  const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'in_progress' | 'completed' | 'rejected') => {
-    try {
-      const ideaToUpdate = ideas.find(idea => idea.id === id);
-      if (!ideaToUpdate) return;
-
-      await updateIdea.mutateAsync({
-        id: id,
-        status: newStatus,
-      });
-    } catch (error) {
-      console.error('Błąd podczas aktualizacji statusu:', error);
-      // Error handling is automatic through mutations
-    }
-  };
-
-  const handleEditIdea = (idea: IdeaType) => {
+  const handleEditIdea = useCallback((idea: IdeaType) => {
     setEditingIdea(idea);
     const formElement = document.querySelector('#ideaForm');
     formElement?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [setEditingIdea]);
 
-  const handleIdeaSubmit = async (data: { title: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'rejected' }) => {
+  const handleIdeaSubmit = useCallback(async (data: { title: string; description: string; status: 'pending' | 'in_progress' | 'completed' | 'rejected' }) => {
     try {
       if (editingIdea) {
         await updateIdea.mutateAsync({
@@ -218,17 +182,16 @@ export default function Home() {
         await createIdea.mutateAsync(data);
       }
     } catch (error) {
-      console.error('Error while saving idea:', error);
       // Error handling is automatic through mutations
     }
-  };
+  }, [editingIdea, updateIdea, createIdea, setEditingIdea]);
 
   // Loading states
   const isLoading = linksLoading || ideasLoading;
-  
+
   if (error) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-red-500 text-white p-4 rounded">
           {error}
         </div>
@@ -237,15 +200,15 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-white">Link Manager</h1>
-      
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-6 sm:mb-8 tracking-tight">Link Manager</h1>
+
       {/* Link form section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4 text-white">Add New Link</h2>
+      <div className="mb-8 sm:mb-12">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Add New Link</h2>
         <Suspense fallback={<div>Loading form...</div>}>
-          <LinkForm 
-            onSubmit={handleSubmit} 
+          <LinkForm
+            onSubmit={handleSubmit}
             initialData={editingLink ? {
               url: editingLink.url,
               title: editingLink.title,
@@ -261,19 +224,24 @@ export default function Home() {
       </div>
 
       {/* Search section */}
-      <div className="mb-8">
-        <input
-          type="text"
-          placeholder="Search links..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 rounded-md border border-gray-600 bg-gray-700 text-white"
-        />
+      <div className="mb-8 sm:mb-12">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">🔍</span>
+          </div>
+          <input
+            type="text"
+            placeholder="Search links..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 p-3.5 rounded-xl border-2 border-transparent bg-card text-foreground shadow-sm focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 outline-none sm:text-lg"
+          />
+        </div>
       </div>
 
       {/* Links list */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-4 text-white">Your Links</h2>
+      <div className="mb-10 sm:mb-16">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Your Links</h2>
         {isLoading ? (
           <div>Loading links...</div>
         ) : linksError ? (
@@ -292,10 +260,10 @@ export default function Home() {
       </div>
 
       {/* Ideas section */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-4 text-white">Ideas</h2>
-        <div className="mb-8">
-          <IdeaForm 
+      <div className="mb-10 sm:mb-16">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Ideas</h2>
+        <div className="mb-6 sm:mb-8">
+          <IdeaForm
             onSubmit={handleIdeaSubmit}
             initialData={editingIdea ? {
               title: editingIdea.title,
@@ -307,43 +275,12 @@ export default function Home() {
         </div>
         <div className="space-y-4">
           {ideas.map((idea) => (
-            <div key={idea.id} className="bg-gray-800 p-4 rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-semibold">{idea.title}</h3>
-                <div className="flex gap-2">
-                  {/* ZACHOWUJEMY wszystkie oryginalne gradienty! */}
-                  <button
-                    onClick={() => handleEditIdea(idea)}
-                    className="gradient-button edit-gradient px-3 py-1 text-white rounded hover:opacity-90"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteIdea(idea.id.toString())}
-                    className="gradient-button delete-gradient px-3 py-1 text-white rounded hover:opacity-90"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <p className="text-gray-300 mb-2">{idea.description}</p>
-              <div className="flex justify-between items-center text-sm text-gray-400">
-                <span className={`px-2 py-1 rounded ${
-                  idea.status === 'completed' ? 'bg-green-900 text-green-200' :
-                  idea.status === 'in_progress' ? 'bg-blue-900 text-blue-200' :
-                  idea.status === 'rejected' ? 'bg-red-900 text-red-200' :
-                  'bg-gray-700 text-gray-300'
-                }`}>
-                  {idea.status === 'completed' ? 'Completed' :
-                   idea.status === 'in_progress' ? 'In Progress' :
-                   idea.status === 'rejected' ? 'Rejected' :
-                   'Pending'}
-                </span>
-                <span>
-                  Created: {new Date(idea.createdAt).toLocaleDateString('en-US')}
-                </span>
-              </div>
-            </div>
+            <IdeaCard
+              key={idea.id}
+              idea={idea}
+              onEdit={handleEditIdea}
+              onDelete={handleDeleteIdea}
+            />
           ))}
         </div>
       </div>

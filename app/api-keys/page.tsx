@@ -276,7 +276,7 @@ export default function ApiKeys() {
 
   if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-700 rounded w-1/4 mb-8"></div>
           <div className="h-32 bg-gray-700 rounded mb-8"></div>
@@ -291,7 +291,7 @@ export default function ApiKeys() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <h1 className="text-3xl font-bold mb-8 text-white">API Keys Manager</h1>
 
       {session ? (
@@ -472,10 +472,10 @@ export default function ApiKeys() {
                   </div>
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
                   <button
                     onClick={() => handleCopy(apiKey.api_key, apiKey.service_name)}
-                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                    className="gradient-button copy-gradient px-3 py-1 rounded text-sm"
                   >
                     Copy
                   </button>
@@ -484,14 +484,14 @@ export default function ApiKeys() {
                     <>
                       <button
                         onClick={() => handleEdit(apiKey)}
-                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button edit-gradient px-3 py-1 rounded text-sm"
                       >
                         Edit
                       </button>
 
                       <button
                         onClick={() => handleDelete(apiKey.id)}
-                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        className="gradient-button delete-gradient px-3 py-1 rounded text-sm"
                       >
                         Delete
                       </button>

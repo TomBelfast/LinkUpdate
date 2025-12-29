@@ -11,11 +11,11 @@ import { toast } from 'react-hot-toast';
 const VideoCard = dynamic(() => import('@/components/VideoCard'), {
   ssr: false,
   loading: () => (
-    <div className="bg-gray-900 rounded-lg overflow-hidden shadow-lg animate-pulse">
-      <div className="w-full pt-[56.25%] bg-gray-800"></div>
+    <div className="bg-card rounded-2xl overflow-hidden shadow-lg animate-pulse border border-border">
+      <div className="w-full pt-[56.25%] bg-muted"></div>
       <div className="p-4">
-        <div className="h-6 bg-gray-800 rounded w-3/4 mb-2"></div>
-        <div className="h-4 bg-gray-800 rounded w-1/2"></div>
+        <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-muted rounded w-1/2"></div>
       </div>
     </div>
   )
@@ -26,7 +26,7 @@ export default function YouTubeLinks() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
   useEffect(() => {
     fetchYouTubeLinks();
   }, []);
@@ -54,7 +54,7 @@ export default function YouTubeLinks() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Czy na pewno chcesz usunąć ten film?')) return;
-    
+
     try {
       const response = await fetch(`/api/links/${id}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -71,11 +71,11 @@ export default function YouTubeLinks() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-orange-500">YouTube Videos</h1>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 tracking-tight">YouTube Videos</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-800 rounded-lg h-[300px]"></div>
+            <div key={i} className="animate-pulse bg-card border border-border rounded-2xl h-[300px]"></div>
           ))}
         </div>
       </div>
@@ -84,9 +84,9 @@ export default function YouTubeLinks() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-orange-500">YouTube Videos</h1>
-        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 tracking-tight">YouTube Videos</h1>
+        <div className="bg-destructive/10 border border-destructive rounded-xl p-4 text-destructive">
           {error}
         </div>
       </div>
@@ -95,21 +95,21 @@ export default function YouTubeLinks() {
 
   return (
     <Suspense fallback={
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-orange-500">YouTube Videos</h1>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 tracking-tight">YouTube Videos</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-800 rounded-lg h-[300px]"></div>
+            <div key={i} className="animate-pulse bg-card border border-border rounded-2xl h-[300px]"></div>
           ))}
         </div>
       </div>
     }>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-orange-500">YouTube Videos</h1>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 tracking-tight">YouTube Videos</h1>
         {links.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">Nie znaleziono żadnych filmów z YouTube</p>
+          <p className="text-muted-foreground text-center py-12 text-lg">Nie znaleziono żadnych filmów z YouTube</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {links.map((link) => {
               const videoId = getYouTubeVideoId(link.url);
               return (

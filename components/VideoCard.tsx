@@ -21,9 +21,9 @@ export default function VideoCard({ link, videoId, onEdit, onDelete, onCopy, onS
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg overflow-hidden shadow-lg flex flex-col">
+    <div className="bg-card text-foreground rounded-2xl overflow-hidden shadow-lg flex flex-col border border-border transition-all hover:shadow-xl hover:-translate-y-1">
       {/* Thumbnail container */}
-      <div 
+      <div
         className="relative w-full pt-[56.25%] cursor-pointer group"
         onClick={handleThumbnailClick}
       >
@@ -47,21 +47,21 @@ export default function VideoCard({ link, videoId, onEdit, onDelete, onCopy, onS
           </div>
         </div>
       </div>
-      
+
       {/* Informacje o filmie */}
       <div className="p-4 flex-1 flex flex-col">
-        <h2 
-          className="text-xl font-semibold text-white mb-2 line-clamp-2 cursor-pointer hover:text-orange-500 transition-colors duration-300"
+        <h2
+          className="text-lg font-bold mb-2 line-clamp-2 cursor-pointer hover:text-primary transition-colors duration-300"
           onClick={handleThumbnailClick}
         >
           {link.title}
         </h2>
         {link.description && (
-          <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
             {link.description}
           </p>
         )}
-        
+
         {/* Przyciski akcji */}
         <div className="flex flex-wrap gap-2 mt-auto">
           <button
@@ -71,7 +71,7 @@ export default function VideoCard({ link, videoId, onEdit, onDelete, onCopy, onS
             <EditIcon className="w-4 h-4" />
             <span>EDIT</span>
           </button>
-          
+
           <button
             onClick={onDelete}
             className="gradient-button delete-gradient text-xs py-1 px-2 flex items-center gap-1"
@@ -79,7 +79,7 @@ export default function VideoCard({ link, videoId, onEdit, onDelete, onCopy, onS
             <DeleteIcon className="w-4 h-4" />
             <span>DELETE</span>
           </button>
-          
+
           <button
             onClick={onCopy}
             className="gradient-button copy-gradient text-xs py-1 px-2 flex items-center gap-1"
@@ -87,7 +87,7 @@ export default function VideoCard({ link, videoId, onEdit, onDelete, onCopy, onS
             <CopyIcon className="w-4 h-4" />
             <span>COPY</span>
           </button>
-          
+
           <button
             onClick={onShare}
             className="gradient-button share-gradient text-xs py-1 px-2 flex items-center gap-1"

@@ -25,13 +25,13 @@ export default function RootLayout({
       <head>
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
       </head>
-      <body className={`${inter.className} dark:bg-gray-900 dark:text-white transition-colors`}>
+      <body className={`${inter.className} bg-background text-foreground antialiased transition-colors duration-500`}>
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider>
               <Toaster position="top-right" />
               <Header />
-              <main className="mt-6">
+              <main className="mt-4 sm:mt-6">
                 {children}
               </main>
             </ThemeProvider>

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import { executeQuery } from "../../lib/db-pool";
+import { executeQuery } from "@/lib/db";
 
 export type User = {
   id: string;

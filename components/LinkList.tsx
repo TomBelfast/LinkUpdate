@@ -27,18 +27,18 @@ export default function LinkList({ links, onEdit, onDelete, onCopy, onShare }: L
   return (
     <div className="grid grid-cols-1 gap-4">
       {nonYoutubeLinks.map((link) => (
-        <div key={link.id} className="p-4 bg-[#1a1d24] rounded-lg shadow border border-[#3a4149] break-words">
-          <h2 className="text-xl font-bold mb-2 text-gray-100 break-words">{link.title}</h2>
-          <a 
-            href={link.url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-orange-500 hover:text-orange-600 hover:underline break-all"
+        <div key={link.id} className="p-5 bg-card text-foreground rounded-xl shadow-sm border border-border transition-all hover:shadow-md break-words">
+          <h2 className="text-xl font-bold mb-2 break-words">{link.title}</h2>
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:opacity-80 break-all font-medium transition-colors"
           >
             {link.url}
           </a>
           {link.description && (
-            <p className="mt-2 text-gray-300 break-all whitespace-pre-wrap">{link.description}</p>
+            <p className="mt-3 text-muted-foreground break-all whitespace-pre-wrap leading-relaxed">{link.description}</p>
           )}
           {/* Do not render prompt on homepage cards */}
           <div className="flex gap-2 mt-4">

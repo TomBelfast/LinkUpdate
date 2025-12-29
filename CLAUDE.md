@@ -4,88 +4,118 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Development Server:**
-- `npm run dev` - Start development server on port 9999, host 0.0.0.0
-- `npm run build` - Build for production with 4GB memory allocation
-- `npm start` - Start production server on port 9999, host 0.0.0.0
-- `npm run lint` - Run ESLint
-- `npm test` - Run Vitest tests
+```bash
+# Development
+npm run dev          # Start dev server on port 9999 (host 0.0.0.0)
+npm run build        # Production build (4GB memory allocation)
+npm start            # Production server on port 8888
 
-**Database Operations:**
-- `npm run db:generate` - Generate Drizzle schema migrations
-- `npm run db:push` - Push schema changes to MySQL database
-- `npm run db:studio` - Open Drizzle Studio
-- `npm run db:seed` - Seed database with initial data
-- `npm run db:sync` - Sync schema definitions
-- `npm run db:setup` - Complete database setup (sync + generate + push)
+# Testing
+npm test             # Run Vitest tests
+npm test -- --watch  # Watch mode
 
-**Testing:**
-Every change must be tested. After each application run, test with curl to verify functionality. If not working, search internet for solutions, implement fixes, and rerun until working.
+# Database
+npm run db:setup     # Full setup: sync + generate + push
+npm run db:push      # Push schema changes to MySQL
+npm run db:studio    # Open Drizzle Studio
+npm run db:seed      # Seed initial data
 
-**Serena Integration:**
-- `./start-serena.sh` - Start Serena MCP server for semantic code analysis
-- Serena dashboard: http://127.0.0.1:24282/dashboard/index.html
-- Serena logs: /root/.serena/logs/
-- Project config: `.serena/project.yml`
-
-**Claude Usage Monitoring:**
-- `./start-claude-monitor.sh` - Start Claude Code Usage Monitor
-- `claude-monitor --plan pro` - Monitor with Pro plan limits
-- `claude-monitor --view daily` - Daily usage view
-- `ccm` - Short alias for claude-monitor
-
-**SuperClaude Framework:**
-- 16 specialized slash commands (e.g., `/sc:implement`, `/sc:analyze`, `/sc:build`)
-- 11 AI personas (architect, frontend, backend, security, qa, etc.)
-- MCP server integration (Context7, Sequential, Magic, Playwright)
-- Framework files in `/root/.claude/`
-- Auto-activation based on context and task type
+# Linting
+npm run lint
+```
 
 ## Architecture Overview
 
-**Tech Stack:**
-- Next.js 15 (App Router) with TypeScript
-- Database: MySQL with Drizzle ORM
-- Authentication: NextAuth.js with Google OAuth and credentials
-- UI: React 19, Tailwind CSS, Headless UI
-- Testing: Vitest
-- Deployment: Docker with standalone output
+**Stack**: Next.js 15 (App Router) + TypeScript + MySQL (Drizzle ORM) + NextAuth.js + React 19
 
-**Key Directories:**
-- `app/` - Next.js App Router pages and API routes
-- `lib/db/schema/` - Drizzle database schema definitions
-- `components/` - Reusable React components
-- `scripts/` - Database and deployment scripts
-- `__tests__/` - Test files with setup in `__tests__/setup.ts`
+### Key Patterns
 
-**Database Schema:**
-- `links` table - URL management with thumbnails and metadata
-- `ideas` table - Project ideas with status tracking
-- `users` table - User authentication and roles
-- Uses MySQL with custom crypto-based password hashing
+**Database Connection** (`lib/db/index.ts`):
+- Singleton connection pool with auto-reconnect
+- Drizzle ORM with typed schema exports
+- Use `getDb()` async function to get database instance
+- Pool handles connection lifecycle automatically
 
-**Authentication:**
-- NextAuth.js with custom credentials provider using crypto.createHash('sha256')
-- Google OAuth integration with automatic user creation
-- Role-based access (admin/user)
-- Custom password comparison with salt+hash format
+**State Management**:
+- Zustand stores in `lib/store/` for client state
+- TanStack Query for server state and caching
+- Optimistic updates pattern where possible
 
-**Development Environment:**
-- MySQL database connection via environment variables
-- Drizzle ORM for type-safe database operations
-- Custom webpack configuration for Node.js polyfills
-- Optimized build with code splitting and compression
+**Authentication** (`lib/auth/`):
+- NextAuth.js with credentials + Google OAuth
+- Custom SHA256 password hashing with salt (NOT bcrypt in existing code)
+- Role-based access: admin/user
+- Session available via `getServerSession(authOptions)`
 
-**Key Features:**
-- Link management with image/thumbnail storage
-- AI integration via OpenAI API
-- File upload handling
-- YouTube integration
-- Todo/task management
-- Admin user management
+### Database Schema (`lib/db/schema/`)
 
-**Performance Optimizations:**
-- Image optimization with Sharp
-- Bundle splitting and compression
-- Custom webpack configuration
-- Memory allocation for large builds (4GB)
+| Table | Purpose |
+|-------|---------|
+| `links` | URLs with metadata, thumbnails (binary), userId |
+| `users` | Auth, roles (admin/user), password hash |
+| `ideas` | Project ideas with status tracking |
+| `projects` | Project organization |
+| `tasks` | Task/todo management |
+
+### API Routes Pattern
+
+Routes in `app/api/` follow Next.js App Router conventions:
+- `route.ts` exports GET, POST, PUT, DELETE handlers
+- Dynamic routes: `[id]/route.ts`
+- Auth check: `getServerSession(authOptions)`
+- Response: `NextResponse.json()`
+
+### UI Components
+
+- Gradient buttons are critical - preserve classes: `gradient-button`, `edit-gradient`, `delete-gradient`, `copy-gradient`, `share-gradient`
+- Components in `components/` are reusable
+- Page-specific components in `app/components/`
+- Tailwind CSS with custom config in `tailwind.config.ts`
+
+## Environment Variables
+
+Required in `.env.local`:
+```env
+DATABASE_HOST=
+DATABASE_PORT=3306
+DATABASE_USER=
+DATABASE_PASSWORD=
+DATABASE_NAME=
+NEXTAUTH_SECRET=      # min 32 chars
+NEXTAUTH_URL=http://localhost:9999
+```
+
+Optional:
+```env
+GOOGLE_ID=            # Google OAuth
+GOOGLE_SECRET=
+OPENAI_API_KEY=       # AI features
+ANTHROPIC_API_KEY=
+GOOGLE_AI_API_KEY=
+PPLX_API_KEY=
+```
+
+## Testing Approach
+
+After changes, verify with curl:
+```bash
+curl http://localhost:9999/api/health
+curl http://localhost:9999/api/links
+```
+
+## Docker
+
+```bash
+docker-compose -f docker-compose.dev.yml up   # Development
+docker-compose -f docker-compose.prod.yml up  # Production
+```
+
+Production uses standalone Next.js output.
+
+## Project-Specific Rules
+
+1. **Preserve gradient CSS classes** - UI depends on them
+2. **Polish language** for UI messages and comments
+3. **English** for variable/function names
+4. **Document changes** in `claudedocs/` directory after major changes
+5. **Run tests** after each change: `npm test`

@@ -35,9 +35,9 @@ const buttonVariants = cva(
         icon: "h-9 w-9",
         
         // Custom sizes for gradient buttons to match existing design
-        gradientDefault: "px-6 py-3", // Matches .gradient-button padding
-        gradientSm: "px-4 py-2", 
-        gradientLg: "px-8 py-4",
+        gradientDefault: "px-4 py-2", // Matches .gradient-button padding
+        gradientSm: "px-3 py-1.5 text-xs",
+        gradientLg: "px-6 py-3",
       },
     },
     defaultVariants: {

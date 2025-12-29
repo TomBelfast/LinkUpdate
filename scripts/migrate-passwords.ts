@@ -1,4 +1,4 @@
-import { executeQuery } from '@/lib/db-pool';
+import { executeQuery } from '@/lib/db';
 import { hashPasswordSecure, detectPasswordFormat } from '@/lib/auth/password-utils';
 
 interface User {

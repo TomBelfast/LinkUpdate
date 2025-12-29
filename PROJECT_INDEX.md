@@ -1,8 +1,10 @@
 # Project Index - LINK Application
 
+> 📚 **Documentation Navigation:** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for complete documentation navigation.
+
 ## Project Overview
 
-**LINK** is a comprehensive link management and project organization platform built with Next.js 15, featuring AI integration, user management, and task tracking capabilities.
+**LINK** (Link Manager) is a comprehensive link management and project organization platform built with Next.js 15, featuring AI integration, user management, and task tracking capabilities.
 
 ### Quick Stats
 - **Tech Stack**: Next.js 15, TypeScript, MySQL, Drizzle ORM
@@ -307,6 +309,15 @@ POST   /api/ai            # AI integration
 - **Environment Variables**: Database and OAuth configuration
 - **Port Configuration**: Default port 9999
 - **Production Build**: Optimized for standalone deployment
+
+---
+
+## 📚 Related Documentation
+
+- **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** - Complete documentation navigation
+- **[README.md](README.md)** - Project overview and quick start
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API endpoint documentation
+- **[LOCAL_DEV_SETUP.md](LOCAL_DEV_SETUP.md)** - Local development setup guide
 
 ---
 

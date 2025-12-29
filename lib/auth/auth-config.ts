@@ -11,7 +11,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { JWT } from "next-auth/jwt";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import { executeQuery } from "@/lib/db-pool";
+import { executeQuery } from "@/lib/db";
 import { env } from "@/lib/env";
 
 // Secure password comparison using bcrypt

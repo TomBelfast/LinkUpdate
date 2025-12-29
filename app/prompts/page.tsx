@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link as LinkType } from '@/db/schema';
 import dynamic from 'next/dynamic';
-import { EditIcon, DeleteIcon, CopyIcon, ShareIcon, buttonStyles } from '@/components/Icons';
-import { commonStyles } from '@/styles/common';
+import { EditIcon, DeleteIcon, CopyIcon, ShareIcon } from '@/components/Icons';
+import { commonStyles, buttonStyles } from '@/styles/common';
 import { Dialog } from '@headlessui/react';
 import Image from 'next/image';
 
 const PromptForm = dynamic(() => import('@/components/PromptForm'), {
-  loading: () => <div className="animate-pulse bg-gray-700 h-32 rounded-lg"></div>,
+  loading: () => <div className="animate-pulse bg-muted h-32 rounded-2xl"></div>,
   ssr: false
 });
 
@@ -41,15 +41,9 @@ export default function Prompts() {
       const response = await fetch('/api/prompts');
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Błąd odpowiedzi:', errorData);
         throw new Error(`Nie udało się pobrać promptów: ${errorData.error || response.statusText}`);
       }
       const data = await response.json();
-      console.log('Pobrane prompty:', data.map((p: LinkType) => ({
-        ...p,
-        imageData: p.imageData ? `[${p.imageData.length} bajtów]` : null,
-        thumbnailData: p.thumbnailData ? `[${p.thumbnailData.length} bajtów]` : null
-      })));
       setPrompts(data);
     } catch (error) {
       console.error('Błąd podczas pobierania promptów:', error);
@@ -61,73 +55,30 @@ export default function Prompts() {
     try {
       const url = editingPrompt ? `/api/prompts/${editingPrompt.id}` : '/api/prompts';
       const method = editingPrompt ? 'PUT' : 'POST';
-      
-      console.log('=== Rozpoczęcie wysyłania żądania ===');
-      console.log('Konfiguracja żądania:', {
-        url,
-        method,
-        editingPromptId: editingPrompt?.id,
-        isEdit: !!editingPrompt
-      });
-      
-      console.log('Dane do wysłania:', {
-        ...data,
-        imageData: data.imageData ? `[${data.imageData.length} bajtów]` : null,
-        thumbnailData: data.thumbnailData ? `[${data.thumbnailData.length} bajtów]` : null,
-        imageMimeType: data.imageMimeType,
-        thumbnailMimeType: data.thumbnailMimeType
-      });
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
-      console.log('Otrzymano odpowiedź:', {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-
       const responseData = await response.json();
-      console.log('Odpowiedź JSON:', responseData);
 
       if (!response.ok) {
-        console.error('Odpowiedź nie jest OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: responseData.error
-        });
         throw new Error(responseData.error || `Błąd serwera: ${response.status}`);
       }
 
-      console.log('Odświeżanie listy promptów po udanej operacji');
       await fetchPrompts();
-      
+
       setToast({
         message: 'Prompt został pomyślnie zapisany!',
         type: 'success'
       });
-      
-      console.log('Czyszczenie stanu edycji');
+
       setEditingPrompt(null);
       setIsEditModalOpen(false);
 
     } catch (error) {
-      console.error('=== Błąd podczas zapisywania promptu ===');
-      console.error('Szczegóły błędu:', {
-        error,
-        message: error instanceof Error ? error.message : 'Nieznany błąd',
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      console.error('Stan komponentu w momencie błędu:', {
-        isEditModalOpen,
-        editingPromptId: editingPrompt?.id,
-        hasToast: !!toast
-      });
-      
       setToast({
         message: error instanceof Error ? error.message : 'Wystąpił nieznany błąd',
         type: 'error'
@@ -147,7 +98,7 @@ export default function Prompts() {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Czy na pewno chcesz usunąć ten prompt?')) return;
-    
+
     try {
       const response = await fetch(`/api/prompts/${id}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -193,98 +144,89 @@ export default function Prompts() {
   };
 
   const handleImageError = (promptId: number) => {
-    console.error(`Błąd ładowania obrazu dla promptu ${promptId}`);
     setImageErrors(prev => ({ ...prev, [promptId]: true }));
   };
 
   return (
-    <div className={`${commonStyles.container} text-gray-100 max-w-[1600px]`}>
-      <h1 className={`${commonStyles.pageTitle} text-orange-500`}>Baza Promptów</h1>
-      
-      <div className={`${commonStyles.section} bg-[#1a1d24] rounded-lg p-6 shadow-lg`}>
-        <h2 className={commonStyles.secondaryTitle}>
-          Dodaj Nowy Prompt
-        </h2>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-[1600px]">
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 tracking-tight">Baza Promptów</h1>
+
+      <div className="mb-10 bg-card rounded-2xl p-6 shadow-lg border border-border">
+        <h2 className="text-xl sm:text-2xl font-bold mb-6">Dodaj Nowy Prompt</h2>
         <PromptForm onSubmit={handleSubmit} />
       </div>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
         {prompts.map((prompt) => (
-          <div key={prompt.id} className={`${commonStyles.card} flex flex-col h-full bg-[#1a1d24] shadow-lg hover:shadow-xl transition-shadow p-5`}>
+          <div key={prompt.id} className="group bg-card text-foreground rounded-2xl shadow-sm border border-border transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col h-full overflow-hidden p-5">
             {prompt.thumbnailData && prompt.thumbnailMimeType && !imageErrors[prompt.id] ? (
-              <div className="relative aspect-[16/9] w-full mb-5 bg-[#262b36] rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Image
-                    src={`/api/media/${prompt.id}/thumbnail`}
-                    alt={prompt.title}
-                    fill
-                    className="object-contain p-3"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority
-                    onError={() => handleImageError(prompt.id)}
-                    unoptimized
-                  />
-                </div>
+              <div className="relative aspect-[16/9] w-full mb-5 bg-muted rounded-xl overflow-hidden shadow-inner">
+                <Image
+                  src={`/api/media/${prompt.id}/thumbnail`}
+                  alt={prompt.title}
+                  fill
+                  className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onError={() => handleImageError(prompt.id)}
+                  unoptimized
+                />
               </div>
             ) : prompt.imageData && prompt.imageMimeType && !imageErrors[prompt.id] ? (
-              <div className="relative aspect-[16/9] w-full mb-5 bg-[#262b36] rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Image
-                    src={`/api/media/${prompt.id}`}
-                    alt={prompt.title}
-                    fill
-                    className="object-contain p-3"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority
-                    onError={() => handleImageError(prompt.id)}
-                    unoptimized
-                  />
-                </div>
+              <div className="relative aspect-[16/9] w-full mb-5 bg-muted rounded-xl overflow-hidden shadow-inner">
+                <Image
+                  src={`/api/media/${prompt.id}`}
+                  alt={prompt.title}
+                  fill
+                  className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onError={() => handleImageError(prompt.id)}
+                  unoptimized
+                />
               </div>
             ) : (
-              <div className="relative aspect-[16/9] w-full mb-5 bg-[#262b36] rounded-lg flex items-center justify-center">
-                <span className="text-gray-400">Brak obrazu</span>
+              <div className="relative aspect-[16/9] w-full mb-5 bg-muted rounded-xl flex items-center justify-center border border-dashed border-border">
+                <span className="text-muted-foreground font-medium">Brak obrazu</span>
               </div>
             )}
-            
-            <h3 className="text-xl font-semibold mb-3 line-clamp-1">{prompt.title}</h3>
+
+            <h3 className="text-lg font-bold mb-2 line-clamp-1">{prompt.title}</h3>
             {prompt.description && (
-              <p className="text-gray-300 mb-4 line-clamp-2 text-base">{prompt.description}</p>
+              <p className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">{prompt.description}</p>
             )}
             {prompt.prompt && (
-              <div className="bg-[#262b36] p-4 rounded-lg mb-5 overflow-auto max-h-[120px]">
-                <pre className="whitespace-pre-wrap text-base line-clamp-3">{prompt.prompt}</pre>
+              <div className="bg-muted/50 p-4 rounded-xl mb-5 overflow-auto max-h-[120px] scrollbar-thin">
+                <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">{prompt.prompt}</pre>
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-2 mt-auto">
-              <button 
-                onClick={() => handleEdit(prompt)} 
-                className={`${buttonStyles.edit} text-sm py-2`}
+              <button
+                onClick={() => handleEdit(prompt)}
+                className="gradient-button edit-gradient text-xs py-2"
               >
                 <EditIcon className="w-4 h-4" />
                 <span>Edytuj</span>
               </button>
-              <button 
-                onClick={() => handleDelete(prompt.id)} 
-                className={`${buttonStyles.delete} text-sm py-2`}
+              <button
+                onClick={() => handleDelete(prompt.id)}
+                className="gradient-button delete-gradient text-xs py-2"
               >
                 <DeleteIcon className="w-4 h-4" />
                 <span>Usuń</span>
               </button>
-              <button 
-                onClick={() => handleCopy(prompt)} 
-                className={`${buttonStyles.copy} text-sm py-2`}
+              <button
+                onClick={() => handleCopy(prompt)}
+                className="gradient-button copy-gradient text-xs py-2"
               >
                 <CopyIcon className="w-4 h-4" />
                 <span>Kopiuj</span>
               </button>
-              <button 
-                onClick={() => handleShare(prompt)} 
-                className={`${buttonStyles.share} text-sm py-2`}
+              <button
+                onClick={() => handleShare(prompt)}
+                className="gradient-button share-gradient text-xs py-2"
               >
                 <ShareIcon className="w-4 h-4" />
-                <span>Udostępnij</span>
+                <span>Share</span>
               </button>
             </div>
           </div>
@@ -296,16 +238,16 @@ export default function Prompts() {
         onClose={handleCloseModal}
         className="relative z-50"
       >
-        <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-2xl bg-[#1a1d24] rounded-xl shadow-xl p-6 border border-[#3a4149]">
-            <div className="flex justify-between items-center mb-4">
-              <Dialog.Title className="text-2xl font-bold text-gray-100">
+          <Dialog.Panel className="w-full max-w-2xl bg-card rounded-2xl shadow-2xl p-6 border border-border">
+            <div className="flex justify-between items-center mb-6">
+              <Dialog.Title className="text-2xl font-bold tracking-tight">
                 Edytuj Prompt
               </Dialog.Title>
               <button
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-200 transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-all"
               >
                 <span className="sr-only">Zamknij</span>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,7 +255,7 @@ export default function Prompts() {
                 </svg>
               </button>
             </div>
-            
+
             {editingPrompt && (
               <PromptForm
                 onSubmit={handleSubmit}
@@ -330,8 +272,8 @@ export default function Prompts() {
                   editingPrompt.thumbnailData && editingPrompt.thumbnailMimeType
                     ? `/api/media/${editingPrompt.id}/thumbnail`
                     : editingPrompt.imageData && editingPrompt.imageMimeType
-                    ? `/api/media/${editingPrompt.id}`
-                    : null
+                      ? `/api/media/${editingPrompt.id}`
+                      : null
                 }
               />
             )}
@@ -340,13 +282,15 @@ export default function Prompts() {
       </Dialog>
 
       {toast && (
-        <div 
-          className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          } text-white transition-opacity duration-300 ease-in-out`}
+        <div
+          className={`fixed bottom-6 right-6 p-4 rounded-xl shadow-2xl z-50 transform transition-all duration-300 ${toast.type === 'success' ? 'bg-green-600' : 'bg-destructive'
+            } text-white font-medium`}
           role="alert"
         >
-          {toast.message}
+          <div className="flex items-center gap-3">
+            {toast.type === 'success' ? '✅' : '❌'}
+            {toast.message}
+          </div>
         </div>
       )}
     </div>

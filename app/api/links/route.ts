@@ -3,17 +3,29 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-config';
 import { getDbInstance } from '@/db';
 import { links } from '@/db/schema';
-import { and, desc, eq, like, or } from 'drizzle-orm';
+import { and, desc, eq, like, or, sql } from 'drizzle-orm';
 
 export async function GET(request: Request) {
-  console.log('🔍 GET /api/links - Rozpoczynam obsługę żądania');
-
   try {
+    // Weryfikacja sesji
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const db = await getDbInstance();
 
     const url = new URL(request.url);
     const rawSearch = url.searchParams.get('search') ?? '';
     const userId = url.searchParams.get('userId') ?? '';
+
+    // Parametry paginacji
+    const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20')));
+    const offset = (page - 1) * limit;
 
     const search = rawSearch.trim();
 
@@ -32,17 +44,36 @@ export async function GET(request: Request) {
       conditions.push(eq(links.userId, userId));
     }
 
-    let query = db.select().from(links);
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as typeof query;
-    }
+    // Pobierz dane i łączną liczbę równolegle
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const allLinks = await query.orderBy(desc(links.createdAt));
+    const [items, countResult] = await Promise.all([
+      db.select()
+        .from(links)
+        .where(whereClause)
+        .orderBy(desc(links.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` })
+        .from(links)
+        .where(whereClause)
+    ]);
 
-    console.log(`✅ Pobrano ${allLinks.length} linków (search="${search}", userId="${userId}")`);
-    return NextResponse.json(allLinks);
+    const total = Number(countResult[0]?.count ?? 0);
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
-    console.error('❌ Błąd podczas pobierania linków:', error);
     return NextResponse.json(
       { error: 'Wystąpił błąd podczas pobierania linków' },
       { status: 500 }
@@ -62,7 +93,6 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    console.log('Otrzymane dane:', data);
 
     // Podstawowa walidacja
     if (!data.url || !data.title) {
@@ -71,7 +101,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     // Sprawdź czy link już istnieje
     const db = await getDbInstance();
     const [existingLink] = await db.select()
@@ -82,9 +112,8 @@ export async function POST(request: Request) {
       ));
 
     if (existingLink) {
-      console.log('Znaleziono istniejący link:', existingLink);
       return NextResponse.json(
-        { 
+        {
           error: 'Link już istnieje w bazie',
           existingLink: {
             title: existingLink.title,
@@ -101,7 +130,7 @@ export async function POST(request: Request) {
       title: data.title.trim(),
       description: data.description?.trim() || null,
       prompt: null,
-      userId: session.user.id, // Przypisanie do zalogowanego użytkownika
+      userId: session.user.id,
       imageData: null,
       imageMimeType: null,
       thumbnailData: null,
@@ -109,12 +138,6 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-
-    console.log('Dodawanie nowego linku:', {
-      ...newLink,
-      url: newLink.url.substring(0, 50) + '...',
-      description: newLink.description?.substring(0, 50) + '...'
-    });
 
     const [result] = await db.insert(links)
       .values(newLink)
@@ -129,15 +152,8 @@ export async function POST(request: Request) {
       throw new Error('Nie udało się pobrać dodanego linku');
     }
 
-    console.log('Dodany link:', {
-      id: insertedLink.id,
-      title: insertedLink.title,
-      url: insertedLink.url.substring(0, 50) + '...'
-    });
-
     return NextResponse.json(insertedLink, { status: 201 });
   } catch (error) {
-    console.error('Błąd podczas dodawania linku:', error);
     return NextResponse.json(
       { error: 'Wystąpił błąd podczas dodawania linku' },
       { status: 500 }
